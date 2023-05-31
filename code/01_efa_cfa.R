@@ -121,13 +121,6 @@ EFA_model4$BIC
 
 
 
-# latent class analysis 
-
-
-
-
-
-
 
 
 
