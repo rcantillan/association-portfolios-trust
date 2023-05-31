@@ -3,12 +3,10 @@
 pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,survey,
                kableExtra,scales,panelr,sjPlot,sjlabelled,sjmisc,stargazer,skimr,texreg,
                igraph, signnet, ggraph, extrafont, forcats, xtable, Hmisc, psych, psy,
-               nFactors, GPArotation, psychTools)
+               nFactors, GPArotation, psychTools, here)
 
 # load data
-load("~/Documents/doctorado-UC/sem/ELSOC_Long.RData")
-
-elsoc_long_2016_2022$c12_09
+load(here::here("data/ELSOC_Long.RData"))
 
 # seleccionar variables 
 a=elsoc_long_2016_2022;rm(elsoc_long_2016_2022)
