@@ -53,7 +53,7 @@ a_full<- panel_data(a_full, id = idencuesta, wave = ola) %>%
 # Analysis Latent Markov 
 ## Modelo 1
 modelo1 <-  lmest(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c12_07+c12_08~NULL,
-                  #latentFormula =~ mujer+edad+nivel_educ,
+                  latentFormula =~ mujer+edad+nivel_educ,
                   index = c("idencuesta","ola"),
                   output = TRUE,
                   out_se = TRUE,
@@ -66,10 +66,11 @@ modelo1 <-  lmest(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c
                   seed = 123)
 
 plot(modelo1,what="modSel") # de acuerdo con BIC sugiere modelo con 3 clases 
+plot(modelo1,what="modSel")
 
 ## Modelo selección de modelos 1:5 estados latentes. 
 mod_sel <- lmestSearch(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c12_07+c12_08~NULL,
-                   latentFormula =~ mujer+edad+nivel_educ,#mujer+edad+nivel_educ,
+                   latentFormula =~ mujer+edad+nivel_educ, #mujer+edad+nivel_educ,
                    index = c("idencuesta","ola"), 
                    data = a_full,
                    output = TRUE,
@@ -85,9 +86,14 @@ summary(mod_sel) # de acuerdo con el BIC se selecciona modelo de 3 clases
 # Modelo de mejor ajuste k=3
 modelo3 <- mod_sel$out.single[[3]]
 summary(modelo3)
+
+# Probabilidades iniciales 
 plot(modelo3, what="CondProb")
 
-# plot transiciones
+# Distribución marginal
+plot(modelo3, what="marginal")
+
+# Transiciones
 plot(modelo3,what="transitions")
 
 
