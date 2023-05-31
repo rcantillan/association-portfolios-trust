@@ -1,0 +1,572 @@
+---
+title: "Trust and diversity as an outcome of associative behavior patterns in Chile"
+subtitle: "ISA FORUM 2021"
+author: "Cantillan, R, Espinoza, V. Beck, G."
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+header-includes:
+- \usepackage{booktabs}
+- \usecolortheme{spruce}
+- \setbeamercolor{structure}{fg=black}
+- \setbeamercolor{section in head/foot}{fg=white, bg=black}
+institute: "redesLab-COES \nhttp://redeslab.gitlab.io/"
+fontsize: 9pt
+output: 
+   beamer_presentation: 
+     theme: "Copenhagen"
+     colortheme: "beaver"
+     fonttheme: professionalfonts
+     incremental: false
+     latex_engine: xelatex
+     df_print: kable
+     toc: yes
+     fig_crop: no
+     fig_caption: yes
+---
+
+## Trust
+```{r, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(jtools)
+library(ggplot2)
+library(broom)
+library(survey)
+library(dplyr)
+library(LMest)
+library(panelr)
+
+## Cargar base
+load("ELSOC_W01_v3.10_R.RData")
+load("ELSOC_W03_v1.10_R.RData")
+
+# Selección de variables
+elsoc1<-dplyr::select(elsoc_2016, idencuesta, ponderador01, m0_sexo, 
+                      m0_edad, m01, c12_01, c12_02, c12_03, c12_04, c12_05, 
+                      c12_06, c12_07, c12_08, c12_09, r01_01, r01_02, 
+                      r01_03, r01_04, r01_05, r01_06, r01_07, r01_08, 
+                      r01_09, r01_10, r01_11, r01_12, r01_13)
+
+elsoc2<-dplyr::select(elsoc_2018, idencuesta, ponderador01, m0_sexo, 
+                      m0_edad, m01, c12_01, c12_02, c12_03, c12_04, c12_05, 
+                      c12_06, c12_07, c12_08, c12_09, r01_01, r01_02, 
+                      r01_03, r01_04, r01_05, r01_06, r01_07, r01_08, 
+                      r01_09, r01_10, r01_11, r01_12, r01_13)
+
+# Generar identificador de ola y setear bases
+elsoc1$ola<-1
+elsoc2$ola<-2
+
+elsoc<-rbind(elsoc1,elsoc2)
+elsoc<-rbind(elsoc1,elsoc2, make.row.names=FALSE)
+
+# Recodificación de variables
+
+##Recodificar asociaciones voluntarias y otras
+
+elsoc = elsoc %>%
+  dplyr::mutate (r01_01      = ifelse   (r01_01     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_02      = ifelse   (r01_02     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_03      = ifelse   (r01_03     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_04      = ifelse   (r01_04     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_05      = ifelse   (r01_05     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_06      = ifelse   (r01_06     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_07      = ifelse   (r01_07     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_08      = ifelse   (r01_08     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_09      = ifelse   (r01_09     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_10      = ifelse   (r01_10     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_11      = ifelse   (r01_11     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_12      = ifelse   (r01_12     > 1 , 1,    0)) %>%
+  dplyr::mutate (r01_13      = ifelse   (r01_13     > 1 , 1,    0)) %>%
+  dplyr::mutate (JJVV        = ifelse   (c12_01     < 2 , 0,    1)) %>% 
+  dplyr::mutate (religiosa   = ifelse   (c12_02     < 2 , 0,    1)) %>%
+  dplyr::mutate (partido_mov = ifelse   (c12_03     < 2 , 0,    1)) %>%
+  dplyr::mutate (sindicato   = ifelse   (c12_04     < 2 , 0,    1)) %>%
+  dplyr::mutate (profesional = ifelse   (c12_05     < 2 , 0,    1)) %>%
+  dplyr::mutate (caridad     = ifelse   (c12_06     < 2 , 0,    1)) %>%
+  dplyr::mutate (deportiva   = ifelse   (c12_07     < 2 , 0,    1)) %>%
+  dplyr::mutate (AAEE        = ifelse   (c12_08     < 2 , 0,    1)) %>%
+  dplyr::mutate (otra        = ifelse   (c12_09     < 2 , 0,    1)) %>%
+  dplyr::select (idencuesta, ola, mujer=m0_sexo, nivel_educ=m01, 
+                 edad=m0_edad, JJVV, religiosa, partido_mov, sindicato, 
+                 profesional, caridad, deportiva, AAEE, otra, r01_01, r01_02, 
+                 r01_03, r01_04, r01_05, r01_06, r01_07, r01_08, r01_09, 
+                 r01_10, r01_11, r01_12, r01_13)
+
+elsoc[elsoc=="-999"] <- NA
+elsoc[elsoc=="-888"] <- NA
+elsoc <- na.omit(elsoc)
+
+#variable diversidad
+elsoc <- elsoc %>%
+  mutate(diversidad = r01_01 + r01_02 + r01_03 + r01_04 + r01_05 + r01_06 + 
+           r01_07 + r01_08 + r01_09 + r01_10 + r01_11 + r01_12 + r01_13)
+
+##Crear variables de diversidad de clase media
+elsoc <- elsoc %>%
+  mutate(diversidadCM = r01_01 + r01_06 + r01_08 + r01_09 + r01_12 + r01_13)
+
+##Crear variable diversidad de lazos de clase trabajadora
+elsoc <- elsoc %>%
+  mutate(diversidadCT = r01_02 + r01_03 + r01_04 + r01_05 + r01_07 + 
+           r01_10 + r01_11)
+
+
+elsoc <- select(elsoc, -r01_01, -r01_02, -r01_03, -r01_04, -r01_05, -r01_06, 
+                -r01_07, -r01_08, -r01_09, -r01_10, -r01_11, -r01_12, -r01_13)
+
+
+
+elsoc<- panel_data(elsoc, id = idencuesta, wave = ola) %>%
+  complete_data(min.waves = 2)%>%
+  as.data.frame()
+
+# Analysis Latent Markov 
+
+##Modelo 1-
+modelo1 <-  lmest(responsesFormula = JJVV+religiosa+partido_mov+sindicato+
+                    profesional+caridad+deportiva+AAEE+otra ~NULL,
+                  latentFormula =~ mujer+nivel_educ+edad,
+                  index = c("idencuesta","ola"),
+                  output = TRUE,
+                  out_se = TRUE,
+                  data = elsoc,
+                  k = 1,
+                  start = 1,
+                  modBasic = 1,
+                  modManifest="LM",
+                  seed = 123)
+
+modelo1
+summary(modelo1)
+
+##Modelo 2
+modelo2 <-  lmest(responsesFormula = JJVV+religiosa+partido_mov+sindicato+
+                    profesional+caridad+deportiva+AAEE+otra ~NULL,
+                  latentFormula =~ mujer+nivel_educ+edad,
+                  index = c("idencuesta","ola"),
+                  output = TRUE,
+                  out_se = TRUE,
+                  data = elsoc,
+                  k = 2,
+                  start = 1,
+                  modBasic = 1,
+                  modManifest="LM",
+                  seed = 123)
+modelo2
+summary(modelo2)
+
+##Modelo 3
+modelo3<-lmest(responsesFormula = JJVV+religiosa+partido_mov+sindicato+
+                 profesional+caridad+deportiva+AAEE+otra ~NULL,
+               latentFormula =~ mujer+nivel_educ+edad,
+               param = "multilogit",
+               index = c("idencuesta","ola"),
+               output = TRUE,
+               data = elsoc,
+               k = 3,
+               start = 0,
+               modBasic = 2,
+               modManifest="LM",
+               seed = 123, 
+               out_se = TRUE)
+
+modelo3
+summary(modelo3)
+tp<-modelo3$Pi
+#tp
+ip<-modelo3$Piv
+#ip
+ps<-modelo3$Ul
+#ps
+Ga<-as.data.frame(modelo3$Ga)
+#Ga
+Be<-as.data.frame(modelo3$Be)
+#Be
+
+
+
+coefGa3<-as.data.frame(modelo3$Ga)
+seGa3<-as.data.frame(modelo3$seGa)
+z1 <- (coefGa3[,1])/(seGa3[,1])
+pGa1 <- (1 - pnorm(abs(z1), 0, 1)) * 2    
+z2 <- (coefGa3[,2])/(seGa3[,2])
+pGa2 <- (1 - pnorm(abs(z2), 0, 1)) * 2    
+z3 <- (coefGa3[,3])/(seGa3[,3])
+pGa3 <- (1 - pnorm(abs(z3), 0, 1)) * 2    
+z4 <- (coefGa3[,4])/(seGa3[,4])
+pGa4 <- (1 - pnorm(abs(z4), 0, 1)) * 2    
+z5 <- (coefGa3[,5])/(seGa3[,5])
+pGa5 <- (1 - pnorm(abs(z5), 0, 1)) * 2    
+z6 <- (coefGa3[,6])/(seGa3[,6])
+pGa6 <- (1 - pnorm(abs(z6), 0, 1)) * 2    
+
+pGa1
+pGa2
+pGa3
+pGa4
+pGa5
+pGa6
+
+pGa1<-c(pGa1)
+pGa2<-c(pGa2)
+pGa3<-c(pGa3)
+pGa4<-c(pGa4)
+pGa5<-c(pGa5)
+pGa6<-c(pGa6)
+covar <- c("intercep", "mujer", "niveleduc", "edad")
+pvalues <- data.frame(covar,pGa1,pGa2,pGa3,pGa4,pGa5,pGa6)
+pvalues
+
+save(pvalues, file="pvaluestrans.RData")
+
+
+##Graficar modelo 3
+LMmodelo3 <- reshape2::melt(modelo3$Psi, level=1)
+
+LMmodelo3 = LMmodelo3 %>%
+  dplyr::mutate (item        = case_when(item       == 1       ~ "a.neighbors",  
+                                         item       == 2       ~ "b.religious", 
+                                         item       == 3       ~ "c.PParty",
+                                         item       == 4       ~ "d.Union",
+                                         item       == 5       ~ "e.professi",
+                                         item       == 6       ~ "f.Charity",
+                                         item       == 7       ~ "g.Sport",
+                                         item       == 8       ~ "h.students",
+                                         item       == 9       ~ "i.Other")) %>%
+  dplyr::mutate (clase       = case_when(state      == 1       ~ "a.apathetic \n(56%)",
+                                         state      == 2       ~ "b.closed \n(38%)",
+                                         state      == 3       ~ "c.broker \n(.05%)")) %>%
+  dplyr::mutate (category    = case_when(category   == 0       ~ "no (not member)",
+                                         category   == 1       ~ "yes (member)")) 
+
+
+save(LMmodelo3, file="LMmodelo3.RData")
+
+zp1 <- ggplot(LMmodelo3,aes(x = item, y = value, fill = category))
+zp1 <- zp1 + geom_bar(stat = "identity", position = "stack") 
+zp1 <- zp1 + facet_grid(clase ~ .) 
+zp1 <- zp1 + scale_fill_manual(values = c("#4EE2EC", "#59E817")) + theme_bw()
+zp1 <- zp1 + labs(x = "Item",y="State", fill ="") + 
+  theme(text = element_text(size=15))
+zp1 <- zp1 + theme( axis.text.y=element_blank(),
+                    axis.ticks.y=element_blank(),                    
+                    panel.grid.major.y=element_blank())
+zp1 <- zp1 + guides(fill = guide_legend(reverse=F))
+#print(zp1)
+
+```
+
+- Confidence in others (unknown) is one of the lowest compared to other countries in the region (Latinobarómetro)
+
+- The "infrasocialized" explanations point to individuation processes marked by the ideology of individualistic entrepreneurship (Araujo & Martucceli, 2012; Yopo, 2013). 
+
+- The "over-socialized" explanations point to the pressure of a system of norms that leaves little room for collective action and the development of public interest (Oxhorn, 2004). 
+
+- Low civic rates and general collective participation (Espinoza & Rabí, 2009)
+
+## The structural bases: Collective action and trust 
+
+- Structural-relational explanations point to framentary interaction patterns and restricted to primary circles (Castells, 2015)
+
+- Strong polarization in the associative field (Cantillan & Espinoza, in press) and state-citizenship interaction mediated by individuals or interest groups.
+
+   - Collective action unfolds in highly competitive territorial contexts
+   - Vertical fragmentation between popular and state politics (polycentric field)
+   - Low membership rate
+   - Precarious state financing (Alenda & Sandoval, 2003) 
+
+## Theory: Associative field, Quantity versus relations
+
+- Interaction patterns between associations and not the mere number of experiences largely determine the integration of the civil society field, and the probability of exposure to diverse people (in relation to the perspective of Lester M. Salamon)
+
+- The expansion of the personal networks of the members to more than one organization also creates networks between voluntary associations, which may allow the transfer of resources and the trust developed within organizations towards others more or less similar
+
+- The extension of trust to distant circles involves making an assessment of the trustworthiness of individuals who do not know each other directly, which suggests that the parties are likely to focus on the predictability of each other's behavior or the average person (Glanville, 2016; Paxton, 2007; Paxton & Glanville, 2015)
+
+## Associative field 
+
+- They are constituted as informal networks that depend on multiple memberships and the informal contact of members of diverse organizations.
+
+- There are associations that probably overlap more with others as a result of the number of relationships that their members have with members of other associations.
+
+- A proxy identified by the literature is multiple memberships (Moody & White, 2003; Paxton, 2007; Pena López & Sánchez-Santos, 2018)
+
+- Cave world v / s small world (Watts & Strogatz, 1998) 
+
+## Associative field
+
+- Is made up of:
+   - Patterns of individual civic behavior
+   - Interaction patterns and associative composition. 
+   
+## Hypothesis
+
+- **H1**: The associative behavior pattern that most connects to other associative types is positively related to generalized trust and the diversity of personal networks.
+
+- **H2**: The most closed associative behavior patterns (closure) are negatively related to generalized trust and the diversity of personal networks 
+
+## Methodology
+
+- We use the class procedure to model the assumed heterogeneity of associative behaviors at the national level
+
+- We model classes including covariates
+
+- And finally we use the use of class memberships to predict the variation of general trust and diversity
+
+- The procedures have been performed with the LMest package (Bartolucci et al., 2020), and the MplusAutomation package (Hallquist et al., 2020) both designed for R environment and the Mplus v. 7.3. (Muthén & Muthén, 2009) 
+
+## Mixed latent class analysis with distal outcome
+
+- They are used to explore the relationship between this variable and other auxiliary variables observed.
+
+- The most stable approach is the BCH method, which uses a multiple weighted group analysis, where the groups correspond to the latent classes (Bakk et al., 2014).
+
+- The BCH method uses weights wij that reflect the measurement error of the latent class variable. In estimating the auxiliary model, its observation in class / group j is assigned a weight of wij and the auxiliary model is estimated as a multiple-group model using these weights. 
+
+```{r, out.width='45%', fig.align='center', echo=FALSE, fig.cap='LCA with distal outcome model'}
+knitr::include_graphics('/home/rober/Documents/RedesLab/nihms615439f1.jpg')
+```
+
+## Data
+
+- Data come from the 2016-2018 (wave 1-3) measurement of The Longitudinal Chilean Social Survey (ELSOC) https://coes.cl/encuesta-panel/.
+
+- The longitudinal ELSOC survey collects information about social conflict and social cohesion in Chile using in-person interviews at the respondent’s home.
+
+- The survey uses multistage random sampling stratified by city size, clustered by housing blocks and randomly generated individual addresses, where respondents between 18 and 75 years old were selected at random among current residents.
+
+- **ELSOC survey has a size N=2927 in the first wave (2016) and the N=2984 in the third wave (2018)**
+
+- In general, represent 77% of Chile’s population and 93% of its urban population, comprising 40 cities and 92 administrative districts (communities). The response rate is 62.4% of the eligible sample, considering 8.9% refusal rate and 28.8% unreachable contacts.
+
+```{r, out.width='40%', fig.align='center', echo=FALSE}
+knitr::include_graphics('/home/rober/Documents/RedesLab/claseredes_diplomado/LOGO-ELSOC.png')
+```
+
+## Measures  
+
+| Variable  	| Definition 	|
+|-	|-	|
+| Neighbors 	| Memberships in neighbors associations <br>yes=1; no=0 	|
+| Religious 	| Membership in religious associations <br>yes=1; no=0 	|
+| Political party 	| Memberships in party associations <br>yes=1; no=0 	|
+| Union 	| Memberships in Union associations <br>yes=1; no=0 	|
+| Professional 	| Memberships in professional associations <br>yes=1; no=0 	|
+| Charity 	| Memberships in Charity associations <br>yes=1; no=0 	|
+| Sport 	| Memberships in sport associations <br>yes=1; no=0 	|
+| Students 	| Memberships in students associations <br>yes=1; no=0 	|
+| Others 	| Memberships in other associations <br>yes=1; no=0 	|
+## Measures II
+
+| Variable  	| Definition 	|
+|-	|-	|
+| Gender 	| Male (0), Female (1) 	|
+| Education level 	| Years of formal education, Ref= Without education, (1) Basic education, (2) Middle education, (3) Technical education, (4) Higher education, (5) Postgraduate. 	|
+| Trust 	| Generalized measure of perception of trust in individuals: Trusts others = 1; Don't trust = 0 (originally raised in the GSS) 	|
+| Diversity  	| Diversity index is a sum of the occupations present in the position generator in which people report knowing someone (min = 0; max = 13) 	|
+
+## Results: Latent class models fit
+
+
+|  	| Llik 	| AIC 	| BIC 	| N 	| TT 	|
+|-	|-	|-	|-	|-	|-	|
+| 1 class 	| -14179.53 	| 28377.07 	| 28428.41 	| 2219 	| 2 	|
+| 2 class 	| -13366.02 	| 26798.04 	| 26986.30 	| 2219 	| 2 	|
+| **3 class 	| -12835.20 	| 25820.39 	| 26248.25 	| 2219 	| 2** 	|
+| 4 class 	| -12675.32 	| 25572.64 	| 26205.88 	| 2219 	| 2 	|
+| 5 class 	| -12509.49 	| 25348.92 	| 26290.21 	| 2219 	| 2 	|
+
+## Covariables
+
+| Parameters affecting the logit for the initial probabilities 	| Class 2 	| Class 3 	|
+|-	|-	|-	|
+| intercept 	| -3.6336 	| -4.8687 	|
+| mujer 	| 1.2494 	| -0.1113** 	|
+| nivel_educ 	| -0.2315*** 	| 0.2307 	|
+| edad 	| 0.0499 	| 0.0370 	|
+
+p<0.05*, 
+p<0.01**, 
+p<0.001***
+
+## Classes/States
+
+```{r, echo=FALSE, out.width="100%"}
+print(zp1)
+```
+
+## Transition probabilities
+
+```{r, echo=FALSE}
+library(networkD3)
+
+links <- data.frame(
+  source=c("Apathetic","Apathetic", "Apathetic", "Closed", 
+           "Closed", "Closed", "Broker", "Broker", 
+           "Broker"), 
+  target=c("Apathetic*","Closed*", "Broker*", "Apathetic*", 
+           "Closed*", "Broker*", "Apathetic*", "Closed*", 
+           "Broker*"), 
+  value=c(0.9512, 0.0017, 0.0471, 0.0099, 0.9502, 0.0399, 0.2551, 0.4148, 0.3301))
+#links
+
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+         as.character(links$target)) %>% unique())
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+
+p <- sankeyNetwork(Links = links, Nodes = nodes,
+                   Source = "IDsource", Target = "IDtarget",
+                   Value = "value", NodeID = "name", 
+                   sinksRight=FALSE)
+#p
+#Con colores elegidos
+nodes$group <- as.factor(c("a","b","c","a","b","c"))
+my_color <- 'd3.scaleOrdinal() .domain(["a", "b", "c", "d"]) .range(["dodgerblue", "cyan", "chartreuse"])'
+p <- sankeyNetwork(Links = links, Nodes = nodes, Source = "IDsource", Target = "IDtarget", 
+                   Value = "value", NodeID = "name", 
+                   colourScale=my_color, NodeGroup="group",  
+                   fontSize = 10, nodeWidth = 20)
+#p
+```
+
+\begin{columns}
+\column{0.45\textwidth}
+
+```{r, echo=FALSE,out.width="115%"}
+p
+```
+
+\column{0.55\textwidth}
+
+\begin{table}[]
+\begin{tabular}{|l|l|l|l|}
+\hline
+        & State 1* & State 2* & State 3* \\ \hline
+State 1 & 0.9512   & 0.0017   & 0.0471   \\ \hline
+State 2 & 0.0099   & 0.9502   & 0.0399   \\ \hline
+State 3 & 0.2551   & 0.4148   & 0.3301   \\ \hline
+\end{tabular}
+\end{table}
+
+\end{columns}
+
+## Distal outcomes results 
+
+| Trust (distal outcome) 	| Mean 	| SE 	|
+|-	|-	|-	|
+| Class 1 (broker) 	| 0.287 	| 0.055 	|
+| Class 2 (Aphatetic) 	| 0.181 	| 0.009 	|
+| Class 3 (Closed) 	| 0.116 	| 0.023 	|
+
+## Distal outcomes results II
+
+|  Trust (distal outcome)	| Chi-square 	| P-value 	|
+|-	|-	|-	|
+| Overall test 	| 9.698 	| 0.008 	|
+| Class 1 vs. 2 	| 3.596 	| 0.058 	|
+| Class 1 vs. 3 	| 7.676 	| 0.006 	|
+| Class 2 vs. 3 	| 6.024 	| 0.014 	|
+
+## Distal outcomes results III
+
+| Diversity (distal outcome) 	| Mean 	| SE 	|
+|-	|-	|-	|
+| Class 1 (broker) 	| 7.410 	| 0.520 	|
+| Class 2 (Aphatetic) 	| 6.331 	| 0.082 	|
+| Class 3 (Closed) 	| 6.754 	| 0.228 	|
+
+## Distal outcomes results IV
+
+| Diversity (distal outcome) 	| Chi-square 	| P-value 	|
+|-	|-	|-	|
+| Overall test 	| 6.774 	| 0.034 	|
+| Class 1 vs. 2 	| 4.169 	| 0.041 	|
+| Class 1 vs. 3 	| 1.232 	| 0.267 	|
+| Class 2 vs. 3 	| 2.598 	| 0.107 	|
+
+## Conclusions
+
+- The low level of membership in voluntary associations in Chile is notable.
+
+- The associative behavior pattern that we call "broker" is the least numerous and least stable over time.
+
+- It is remarkable that the pattrn "broker" accumulates the largest number of people who trust other strangers
+
+- At the same time, it is the pattern that accumulates the most diversity.
+
+- Finally, it is noteworthy that the pattern that least trusts others is the closed one (which corresponds to our hypothesis)
+
+- and that the difference, in favor of the "broker" class, is the strongest in relation to the others. 
+
+## Limitations 
+
+- the "mixed distal outcome" analysis was performed with only one wave.
+
+- The analysis of transitions between classes is limited to two waves.
+
+- The analysis is an abstract image and does not tell us much about specific contexts, in which eventually the density of links between associations is greater. 
+
+## Special thanks!
+
+This investigation is supported by the projects **CONICYT-FONDECYT n° 1171426** "La estructura de sociabilidad en Chile y sus consecuencias para nuestra convivencia. Análisis longitudinal de redes sociales". Responsible researcher, Dr. Vicente Espinoza. 
+
+## Bibliography
+
+- Araujo, K., & Martuccelli, D. (2012). Desafíos comunes: Retrato de la sociedad chilena y sus individuos (1a. ed). LOM Ediciones.
+
+- Bakk, Z., Oberski, D. L., & Vermunt, J. K. (2014). Relating latent class assignments to external variables: Standard errors for correct inference. Political Analysis, 520–540.
+
+- Bartolucci, F., Pandolfi, S., Pennoni, F., Farcomeni, A., & Serafini, A. (2020). LMest: Generalized Latent Markov Models (3.0.0) [Computer software]. https://CRAN.R-project.org/package=LMest
+
+- Bell, A., & Jones, K. (2015). Explaining Fixed Effects: Random Effects Modeling of Time-Series Cross-Sectional and Panel Data. Political Science Research and Methods, 3(1), 133–153. https://doi.org/10.1017/psrm.2014.7
+
+- Cigler, A., & Joslyn, M. R. (2002). The Extensiveness of Group Membership and Social Capital: The Impact on Political Tolerance Attitudes. Political Research Quarterly, 55(1), 7–25. https://doi.org/10.1177/106591290205500101
+
+## 
+
+- Cornwell, B., & Harrison, J. A. (2004). Union Members and Voluntary Associations: Membership Overlap as a Case of Organizational Embeddedness. American Sociological Review, 69(6), 862–881. https://doi.org/10.1177/000312240406900606
+
+- Diani, M. (2015). The cement of civil society: Studying networks in localities. Cambridge University Press.
+
+- Erickson, B. (2004). The distribution of gendered social capital in Canada. In Creation and Returns of Social Capital (pp. 27–50). Routledge. https://doi.org/10.4324/9780203643648-13
+
+- Espinoza, V., & Rabí, V. (2009). Capital social y civismo en las regiones chilenas. Proyecto Desigualdades.
+
+- Feld, S. L. (1981). The Focused Organization of Social Ties. American Journal of Sociology, 86(5), 1015–1035. JSTOR.
+
+- Glanville, J. L. (2004). Voluntary Associations and Social Network Structure: Why Organizational Location and Type Are Important. Sociological Forum, 19(3), 465–491. https://doi.org/10.1023/B:SOFO.0000042557.56194.03
+
+##
+
+- Glanville, J. L. (2016). Why Does Involvement in Voluntary Associations Promote Trust? Examining the Role of Network Diversity. Sociological Inquiry, 86(1), 29–50. https://doi.org/10.1111/soin.12096
+
+- Hallquist, M., Wiley, J., Lissa, C. van, & Morillo, D. (2020). MplusAutomation: An R Package for Facilitating Large-Scale Latent Variable Analyses in Mplus (0.8) [Computer software]. https://CRAN.R-project.org/package=MplusAutomation
+
+- Moody, J., & White, D. R. (2003). Structural Cohesion and Embeddedness: A Hierarchical Concept of Social Groups. American Sociological Review, 68(1), 103. https://doi.org/10.2307/3088904
+
+- Muthén, L., & Muthén, B. (2009). Mplus. Statistical Analysis with Latent Variables. User’s Guide, 7.
+
+- Paxton, P. (2002). Social Capital and Democracy: An Interdependent Relationship. American Sociological Review, 67(2), 254. https://doi.org/10.2307/3088895
+
+- Paxton, P. (2007). Association Memberships and Generalized Trust: A Multilevel Model Across 31 Countries. Social Forces, 86(1), 47–76. JSTOR.
+
+## 
+
+- Popielarz, P. A. (1999). Organizational constraints on personal network formation. Research in the Sociology of Organizations, 16(1), 263–281.
+
+- Putnam, R. D., Leonardi, R., & Nanetti, R. (1994). Making democracy work: Civic traditions in modern Italy (5. print., 1. Princeton paperback print). Princeton Univ. Press.
+
+- Son, J., & Lin, N. (2008). Social capital and civic action: A network-based approach. Social Science Research, 37(1), 330–349.
+
+- Tindall, D. B., Cormier, J., & Diani, M. (2012). Network social capital as an outcome of social movement mobilization: Using the position generator as an indicator of social network diversity. Social Networks, 34(4), 387–395. https://doi.org/10.1016/j.socnet.2011.12.007
+
+- Yopo, M. (2013). Individualización en Chile: Individuo y sociedad en las transformaciones culturales recientes. Psicoperspectivas, 12(2), 4–15.
+
+
+
+
+
+
