@@ -17,23 +17,23 @@ a_full<-a%>%
   mutate(ola=case_when(ola==1~1,ola==3~2,ola==6~3))%>%
   mutate_at(vars(matches("r01")), ~ifelse(. > 2, 1, 0)) %>% 
   mutate_at(vars(matches("c12")), ~ifelse(. < 2, 0, 1)) %>% 
-  dplyr::mutate (conf_gral   = case_when(c02       == 1       ~ 1,  
-                                         c02       == 2       ~ 0, 
-                                         c02       == 3       ~ 1)) %>%
-  dplyr::mutate (extranjero  = case_when(m45     %in% 1       ~ 0,
-                                         m45     %in% 2 :8    ~ 1)) %>% 
-  dplyr::mutate (mujer       = case_when(m0_sexo   == 1       ~ 0,
-                                         m0_sexo   == 2       ~ 1)) %>% 
-  dplyr::mutate (edad        = case_when(m0_edad %in% 18:24   ~ "18_24",
-                                         m0_edad %in% 25:34   ~ "25_34",
-                                         m0_edad %in% 35:44   ~ "35_44",
-                                         m0_edad %in% 45:54   ~ "45_54",
-                                         m0_edad %in% 55:64   ~ "55_64", 
-                                         m0_edad %in% 65:88   ~ "65")) %>%
-  dplyr::mutate (nivel_educ  = case_when(m01     %in% 1 :3    ~ "básica",
-                                         m01     %in% 4 :5    ~ "media",
-                                         m01     %in% 6 :7    ~ "técnica",
-                                         m01     %in% 8 :10   ~ "univers")) %>%
+  dplyr::mutate (conf_gral   = case_when(c02 == 1 ~ 1,  
+                                         c02 == 2 ~ 0, 
+                                         c02 == 3 ~ 1)) %>%
+  dplyr::mutate (extranjero  = case_when(m45 %in% 1 ~ 0,
+                                         m45 %in% 2 :8 ~ 1)) %>% 
+  dplyr::mutate (mujer       = case_when(m0_sexo == 1 ~ 0,
+                                         m0_sexo == 2 ~ 1)) %>% 
+  dplyr::mutate (edad        = case_when(m0_edad %in% 18:24 ~ "18_24",
+                                         m0_edad %in% 25:34 ~ "25_34",
+                                         m0_edad %in% 35:44 ~ "35_44",
+                                         m0_edad %in% 45:54 ~ "45_54",
+                                         m0_edad %in% 55:64 ~ "55_64", 
+                                         m0_edad %in% 65:88 ~ "65")) %>%
+  dplyr::mutate (nivel_educ  = case_when(m01 %in% 1 :3 ~ "básica",
+                                         m01 %in% 4 :5 ~ "media",
+                                         m01 %in% 6 :7 ~ "técnica",
+                                         m01 %in% 8 :10 ~ "univers")) %>%
   select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ, 
          c12_01, c12_02, c12_03, c12_04, c12_05, c12_06, c12_07, c12_08)
 
@@ -220,20 +220,20 @@ level_order <- c("neighborhood","religious","charity","political","union","profe
 
 
 ## plot 
-p1 <- ggplot(LMmodelo3,aes(x = factor(item, level = level_order), y = value, fill = category))
-p1 <- p1 + geom_bar(stat = "identity", position = "stack") 
-p1 <- p1 + facet_grid(clase ~ .) 
-p1 <- p1 + scale_fill_manual(values = c("#28282B", "#3F00FF")) 
-p1 <- p1 + labs(x = "",y="", fill ="") + theme(text = element_text(size=15))
-p1 <- p1 + theme(axis.ticks.y=element_blank(),
-                   legend.position = "top",
+ggplot(LMmodelo3,aes(x = factor(item, level = level_order), y = value, fill = category)) +
+  geom_bar(stat = "identity", position = "stack") +
+  facet_grid(clase ~ .) +
+  scale_fill_manual(values = c("#28282B", "#3F00FF")) + 
+  labs(x = "",y="", fill ="") + theme(text = element_text(size=15)) +
+  theme(axis.ticks.y=element_blank(),
+                   #legend.position = "top",
                    panel.grid.major.y=element_blank(),
                    plot.title = element_text(hjust = 0.5, size = 8),
                    axis.title = element_text(size=10),
                    axis.text.x = element_text(size = 11,angle = 45, hjust = 0.9),
-                   axis.text.y = element_text(size = 9))
-p1 <- p1 + guides(fill = guide_legend(reverse=F))
-print(p1)
+                   axis.text.y = element_text(size = 9)) +
+  guides(fill = guide_legend(reverse=F))
+
 
 # Distribución marginal
 plot(modelo3, what="marginal")
