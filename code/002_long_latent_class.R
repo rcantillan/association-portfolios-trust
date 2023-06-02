@@ -4,7 +4,7 @@
 pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,survey,
                kableExtra,scales,panelr,sjPlot,sjlabelled,sjmisc,stargazer,skimr,texreg,
                igraph, signnet, ggraph, extrafont, forcats, xtable, Hmisc, psych, psy,
-               nFactors, GPArotation, psychTools, here, LMest, tidyr)
+               nFactors, GPArotation, psychTools, here, LMest, tidyr, tigerstats)
 
 options(knitr.kable.NA = '')
 # load data
@@ -24,12 +24,12 @@ a_full<-a%>%
                                          m45     %in% 2 :8    ~ 1)) %>% 
   dplyr::mutate (mujer       = case_when(m0_sexo   == 1       ~ 0,
                                          m0_sexo   == 2       ~ 1)) %>% 
-  dplyr::mutate (edad        = case_when(m0_edad %in% 18:24   ~ "18-24",
-                                         m0_edad %in% 25:34   ~ "25-34",
-                                         m0_edad %in% 35:44   ~ "35-44",
-                                         m0_edad %in% 45:54   ~ "45-54",
-                                         m0_edad %in% 55:64   ~ "55-64", 
-                                         m0_edad %in% 65:88   ~ "65-")) %>%
+  dplyr::mutate (edad        = case_when(m0_edad %in% 18:24   ~ "18_24",
+                                         m0_edad %in% 25:34   ~ "25_34",
+                                         m0_edad %in% 35:44   ~ "35_44",
+                                         m0_edad %in% 45:54   ~ "45_54",
+                                         m0_edad %in% 55:64   ~ "55_64", 
+                                         m0_edad %in% 65:88   ~ "65")) %>%
   dplyr::mutate (nivel_educ  = case_when(m01     %in% 1 :3    ~ "básica",
                                          m01     %in% 4 :5    ~ "media",
                                          m01     %in% 6 :7    ~ "técnica",
@@ -49,6 +49,98 @@ a_full<- panel_data(a_full, id = idencuesta, wave = ola) %>%
   complete_data(min.waves = "all") %>%
   as.data.frame()
  
+
+# descriptivos
+## sexo
+t1<-rowPerc(xtabs(~c12_01+mujer,data=a_full))
+t2<-rowPerc(xtabs(~c12_02+mujer,data=a_full))
+t3<-rowPerc(xtabs(~c12_03+mujer,data=a_full))
+t4<-rowPerc(xtabs(~c12_04+mujer,data=a_full))
+t5<-rowPerc(xtabs(~c12_05+mujer,data=a_full))
+t6<-rowPerc(xtabs(~c12_06+mujer,data=a_full))
+t7<-rowPerc(xtabs(~c12_07+mujer,data=a_full))
+t8<-rowPerc(xtabs(~c12_08+mujer,data=a_full))
+#t9<-rowPerc(xtabs(~c12_09+mujer,data=a_full))
+
+a<-rbind(t1,t2,t3,t4,t5,t6,t7,t8)
+a<-as.data.frame(a)
+a$part<-c(0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1)
+a1<-a[a$part==1,]
+a1$tipo<-c("JJVV","Religiosa","Deportiva","Caridad","Partido","Profesional","Sindicato","AAEE")
+a1<-a1%>%dplyr::select("tipo","0","1")
+#a1
+
+## nivel educ. 
+t1<-rowPerc(xtabs(~c12_01+nivel_educ,data=a_full))
+t2<-rowPerc(xtabs(~c12_02+nivel_educ,data=a_full))
+t3<-rowPerc(xtabs(~c12_03+nivel_educ,data=a_full))
+t4<-rowPerc(xtabs(~c12_04+nivel_educ,data=a_full))
+t5<-rowPerc(xtabs(~c12_05+nivel_educ,data=a_full))
+t6<-rowPerc(xtabs(~c12_06+nivel_educ,data=a_full))
+t7<-rowPerc(xtabs(~c12_07+nivel_educ,data=a_full))
+t8<-rowPerc(xtabs(~c12_08+nivel_educ,data=a_full))
+#t9<-rowPerc(xtabs(~+nivel_educ,data=a_full))
+
+a<-rbind(t1,t2,t3,t4,t5,t6,t7,t8)
+a<-as.data.frame(a)
+a$part<-c(0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1)
+a2<-a[a$part==1,]
+a2<-a2%>% mutate("no"= básica + media + técnica)%>% mutate("si"= univers)%>%
+   dplyr::select("no", "si")
+
+## edad
+t1<-rowPerc(xtabs(~c12_01+edad,data=a_full))
+t2<-rowPerc(xtabs(~c12_02+edad,data=a_full))
+t3<-rowPerc(xtabs(~c12_03+edad,data=a_full))
+t4<-rowPerc(xtabs(~c12_04+edad,data=a_full))
+t5<-rowPerc(xtabs(~c12_05+edad,data=a_full))
+t6<-rowPerc(xtabs(~c12_06+edad,data=a_full))
+t7<-rowPerc(xtabs(~c12_07+edad,data=a_full))
+t8<-rowPerc(xtabs(~c12_08+edad,data=a_full))
+#t9<-rowPerc(xtabs(~c12_09+edad,data=asociaciones_2016d))
+
+a<-rbind(t1,t2,t3,t4,t5,t6,t7,t8)
+a<-as.data.frame(a)
+a$part<-c(0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1)
+a3<-a[a$part==1,]
+
+a3<-a3 %>%rowwise() %>% 
+  mutate(joven = sum(c_across("18_24":"25_34"), na.rm = T))%>%
+  mutate(adulto = sum(c_across("35_44":"45_54"), na.rm = T))%>%
+  mutate(mayor = sum(c_across("55_64":"65"), na.rm = T)) %>%
+  dplyr::select(joven, adulto, mayor)
+
+tabla1<-cbind(a1,a2,a3)
+tabla1<-as.data.frame(tabla1)
+tabla1<-tibble::rowid_to_column(tabla1, "id");tabla1$id<-NULL
+tabla1<-tabla1 %>% remove_rownames %>% column_to_rownames(var="tipo")
+colnames(tabla1)<-c("hombre","mujer","no","si","joven","adulto","mayor")
+
+## tabla
+kable(tabla1,
+      "latex",
+      booktabs = T,
+      align = c("r"),
+      col.names = c("hombre","mujer","no","si","joven","adulto","mayor")) %>%
+  kable_classic("hover", full_width = F)%>%
+  add_header_above(c(" " = 1,"Sexo" = 2, "Educ. universitaria" = 2, "Edad"=3))
+
+
+## plot items
+a_plot<-a_full %>% 
+  select(c12_01:c12_08) %>%
+  mutate_at(vars(matches("c12")), ~ifelse(. == 1, "Miembro", "No miembro"))%>%
+  mutate_if(is.character, as.factor)
+ 
+set_theme(legend.pos = "top")
+ plot_likert(a_plot,
+             geom.colors = c("#3F00FF","#28282B"),
+            axis.labels=c("JJVV","Religiosa","Deportiva","Caridad","Partido","Profesional","Sindicato","AAEE"),
+            reverse.colors=F,
+            #cat.neutral=NULL,
+            values="sum.outside",
+            show.prc.sign=F)
+
 
 # Analysis Latent Markov 
 ## Modelo 1
