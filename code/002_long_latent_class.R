@@ -101,6 +101,10 @@ seBe<-as.data.frame(modelo3$seBe)
 z <- modelo3$Be/modelo3$seBe
 p <- (1 - pnorm(abs(z), 0, 1))*2 # two-tailed z test
 
+## Estimar errores estandar con bootstrap paramétrico
+mboot <- bootstrap(modelo3, n = 581, B = 2, seed = 172)
+
+## Tablas
 options(scipen=999)
 print(xtable(Be, type = "latex"), file = "output/multinom_coeff.tex")
 print(xtable(p, type = "latex"), file = "output/multinom_pvaluestex")
@@ -111,11 +115,11 @@ plot(modelo3, what="CondProb")
 ## Graficar modelo 3
 LMmodelo3 <- reshape2::melt(modelo3$Psi, level=1)
 LMmodelo3 = LMmodelo3 %>%
-  dplyr::mutate (clase       = case_when(state      == 1 ~ "Class 1\n Closed (36%)",
-                                         state      == 2 ~ "Class 2\n Broker (10%)",
-                                         state      == 3 ~ "Class 3\n Apathetic (54%)")) %>%
-  dplyr::mutate (category    = case_when(category   == 0 ~ "no (not member)",
-                                         category   == 1 ~ "yes (member)")) 
+  dplyr::mutate (clase = case_when(state == 1 ~ "Class 1\n Closed (36%)",
+                                   state == 2 ~ "Class 2\n Broker (10%)",
+                                   state == 3 ~ "Class 3\n Apathetic (54%)")) %>%
+  dplyr::mutate (category = case_when(category == 0 ~ "no (not member)",
+                                      category == 1 ~ "yes (member)")) 
 
 LMmodelo3$item <- plyr::mapvalues(LMmodelo3$item, 
                               c('1','2','3','4','5','6','7','8'),
@@ -139,12 +143,13 @@ p1 <- p1 + theme(axis.ticks.y=element_blank(),
 p1 <- p1 + guides(fill = guide_legend(reverse=F))
 print(p1)
 
-
 # Distribución marginal
 plot(modelo3, what="marginal")
 
 # Transiciones
 plot(modelo3,what="transitions")
+
+
 
 
 
