@@ -130,7 +130,7 @@ p1 <- p1 + facet_grid(clase ~ .)
 p1 <- p1 + scale_fill_manual(values = c("#28282B", "#3F00FF")) 
 p1 <- p1 + labs(x = "",y="", fill ="") + theme(text = element_text(size=15))
 p1 <- p1 + theme(axis.ticks.y=element_blank(),
-                   legend.position = "left",
+                   legend.position = "top",
                    panel.grid.major.y=element_blank(),
                    plot.title = element_text(hjust = 0.5, size = 8),
                    axis.title = element_text(size=10),
@@ -138,6 +138,7 @@ p1 <- p1 + theme(axis.ticks.y=element_blank(),
                    axis.text.y = element_text(size = 9))
 p1 <- p1 + guides(fill = guide_legend(reverse=F))
 print(p1)
+
 
 # Distribución marginal
 plot(modelo3, what="marginal")
