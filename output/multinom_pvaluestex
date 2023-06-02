@@ -1,0 +1,22 @@
+% latex table generated in R 4.1.2 by xtable 1.8-4 package
+% Thu Jun  1 20:13:57 2023
+\begin{table}[ht]
+\centering
+\caption{My Title} 
+\begin{tabular}{rrr}
+  \hline
+ & 2 & 3 \\ 
+  \hline
+intercept & 0.01 & 0.00 \\ 
+  mujer & 0.00 & 0.00 \\ 
+  edad25-34 & 0.69 & 0.69 \\ 
+  edad35-44 & 0.44 & 0.17 \\ 
+  edad45-54 & 0.42 & 0.06 \\ 
+  edad55-64 & 0.80 & 0.00 \\ 
+  edad65- & 0.31 & 0.00 \\ 
+  nivel\_educmedia & 0.04 & 0.02 \\ 
+  nivel\_eductécnica & 0.00 & 0.00 \\ 
+  nivel\_educunivers & 0.00 & 0.00 \\ 
+   \hline
+\end{tabular}
+\end{table}

@@ -6,7 +6,7 @@ pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,sur
                igraph, signnet, ggraph, extrafont, forcats, xtable, Hmisc, psych, psy,
                nFactors, GPArotation, psychTools, here, LMest, tidyr)
 
-
+options(knitr.kable.NA = '')
 # load data
 load(here::here("data/ELSOC_Long.RData"))
 
@@ -66,7 +66,6 @@ modelo1 <-  lmest(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c
                   seed = 123)
 
 plot(modelo1,what="modSel") # de acuerdo con BIC sugiere modelo con 3 clases 
-plot(modelo1,what="modSel")
 
 ## Modelo selección de modelos 1:5 estados latentes. 
 mod_sel <- lmestSearch(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c12_07+c12_08~NULL,
@@ -83,9 +82,30 @@ mod_sel <- lmestSearch(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12
 
 summary(mod_sel) # de acuerdo con el BIC se selecciona modelo de 3 clases
 
-# Modelo de mejor ajuste k=3
+# Crear tabla de ajuste promedio. 
+lk<-mod_sel[["lkv"]];lk<-as.data.frame(lk)
+aic<-mod_sel[["Aic"]];aic<-as.data.frame(aic)
+bic<-mod_sel[["Bic"]];bic<-as.data.frame(bic)
+np<-c(8,46,104,102,200);np<-as.data.frame(np)
+states<-c(1,2,3,4,5);states<-as.data.frame(states)
+t1<-as.data.frame(c(states,lk,np,aic,bic));rm(states,lk,np,aic,bic)
+print(xtable(t1, type = "latex"), file = "output/fit1.tex")
+
+# Modelo de mejor ajuste k=3 y tabla de regresión multinomial
 modelo3 <- mod_sel$out.single[[3]]
 summary(modelo3)
+
+## Resultados de regresión multinomial para describir grupos.
+Be<-as.data.frame(modelo3$Be)
+seBe<-as.data.frame(modelo3$seBe)
+z <- modelo3$Be/modelo3$seBe
+p <- (1 - pnorm(abs(z), 0, 1))*2 # two-tailed z test
+
+options(scipen=999)
+print(xtable(Be, type = "latex"), file = "output/multinom_coeff.tex")
+print(xtable(p, type = "latex"), file = "output/multinom_pvaluestex")
+
+
 
 # Probabilidades iniciales 
 plot(modelo3, what="CondProb")
