@@ -159,3 +159,4 @@ plot(modelo3,what="transitions")
 
 
 
+
