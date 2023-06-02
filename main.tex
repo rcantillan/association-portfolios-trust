@@ -136,21 +136,28 @@ As we indicated above, it is feasible to expect that the associations most conne
 
 \section{Methodology}
 
-Por lo general, los análisis del campo asociativo en Chile se han realizado de manera transversal, y con una perspectiva marcadamente institucional. En este contexto, nuestra apuesta es analizar la dualidad individuo/grupo (Breiger, 1979; McPherson, 1982), con una perspectiva longitudinal (4 tiempos). En específico, nos enfocamos en las membresías asociativas reportadas por los individuos y los patrones de  intersección de tipos asociativos emergentes. En términos metodológicos utilizamos el procedimiento Markov Latent Models (Bartolucci et al., 2015) considerando covariables de relevancia (ej. capital humano). Con esto podemos evaluar las probabilidades iniciales y de transición de estados latentes emergentes, generando así una imagen representativa de las tendencias de integración / desintegración del campo asociativo- voluntario chileno. Utilizamos las olas 1, 2, 3 y 4 del Estudio Social Longitudinal de Chile, ELSOC. Los resultados coinciden con lo sugerido por investigaciones anteriores toda vez que describen empíricamente el predominio de comportamientos “apáticos” y “cerrados” de la población chilena. Un patrón de comportamiento “abierto” se muestra muy minoritario, y agrupa a individuos con alto capital humano. Además, se evidencia una tendencia de segmentación por género. En general, los patrones se muestran estables en el tiempo, toda vez que hay una baja probabilidad de transición del estado “apático”, y aquellos que se muestran activos cívicamente.
+In general, the analyzes of the associative field in Chile have been carried out transversally and with a markedly institutional perspective \parencite{irarrazaval_chile_2017,irarrazaval_sociedad_2017, programa_de_las_naciones_unidas_para_el_desarrollo_desarrollo_2000}. In this context, our bet is to analyze the individual/group duality \parencite{breiger_duality_1974, mcpherson_hypernetwork_1982}, taking advantage of the longitudinal data available for the Chilean case. Specifically, we focus on individual-reported associative memberships and emerging patterns of associative interaction. The analysis is carried out in two stages: First, the subjects are classified using an unsupervised learning analytic technique \parencite{molina_machine_2019} according to their response patterns in the three study waves. We model the putative heterogeneity of associational behaviors at the national level using the latent (or hidden) Markov model technique \parencite{bartolucci_latent_2015}, which is specially designed to analyze continuous longitudinal and categorical data. In a second moment, we seek to explain the general confidence considering the individual classification for the three times as an independent variable.  At this stage, we use identification techniques to discover heterogeneous causal effects of associative interaction patterns.
 \bigskip
 
-We use the class procedure to model the assumed heterogeneity of associative behaviors at the national level. We model classes including covariates and finally we use the use of class memberships to predict the variation of general trust and diversity. The procedures have been performed with the LMest package \parencite{bartolucci_lmest_2020,bartolucci_latent_2015}, and the MplusAutomation package \parencite{hallquist_mplusautomation_2020} both designed for R environment and the Mplus v. 7.3. \parencite{muthen_mplus_2009}.
 
-\subsection{Mixed latent class analysis with distal outcome}
 
-They are used to explore the relationship between this variable and other auxiliary variables observed. The most stable approach is the BCH method, which uses a multiple weighted group analysis, where the groups correspond to the latent classes \parencite{bakk_relating_2014}.
-\bigskip
+The procedures have been performed with the LMest package \parencite{bartolucci_lmest_2020} designed for R environment. 
 
-The BCH method uses weights wij that reflect the measurement error of the latent class variable. In estimating the auxiliary model, its observation in class / group j is assigned a weight of wij and the auxiliary model is estimated as a multiple-group model using these weights. 
 
 \section{Results}
 
+
 \subsection{Latent class analysis}
+
+Longitudinal classification models are based on a first-order homogeneous Markov chain with finite states. The maximum likelihood estimation of the model parameters is performed using the Expectation-Maximization (EM) algorithm, and the standard errors are obtained using parametric bootstrap. In addition, we include relevant covariates to describe the emergent groups or classes. This assumes that the response variables measure the individual characteristic of interest (the associative behavior) represented by the latent variables. This feature is not directly observable and may evolve. Indeed, our interest is to model the effect of the covariates on the latent distribution \parencite{bartolucci_latent_2009}. As Bartolucci \citeyear{bartolucci_latent_2015} suggests, a natural way to allow the initial and transition probabilities of the LM chain to depend on the individual covariates is through a logit multinomial parameterization:
+
+\begin{equation}
+log\frac{P(U^{(t)} = u|U^{(t-1)}= \overline{u}, X^{t}=x))}{P(U^{(t)} = \overline{u}|U^{(t-1)}= \overline{u}, X^{t}=x))} = \gamma 0 \overline{u}u + x^\top (\gamma_{1u} - \gamma_{1\overline{u}})
+\end{equation}
+
+
+
+
 
 % latex table generated in R 4.1.2 by xtable 1.8-4 package
 % Thu Jun  1 17:43:38 2023
@@ -175,14 +182,7 @@ The BCH method uses weights wij that reflect the measurement error of the latent
 \end{threeparttable}
 \end{table}
 
-
-\begin{figure}[htp]
-    \centering
-    \includegraphics[width=12cm]{output/plot_fit.png}
-    \caption{Fit statistics of class models 2}
-    \label{fig:galaxy}
-\end{figure}
-
+The models are evaluated considering the BIC relative fit statistic. This statistic is generally preferred to the AIC statistic, and the model with the smaller number represents the best configuration of goodness-of-fit and complexity \parencite{bartolucci_latent_2015}. Based on Table 1, the model corresponding to the minimum BIC is that with k = 3 latent states. 
 
 \begin{figure}[htp]
     \centering
@@ -190,6 +190,10 @@ The BCH method uses weights wij that reflect the measurement error of the latent
     \caption{Estimates conditional response probabilities}
     \label{fig:galaxy}
 \end{figure}
+
+We can generally observe that the individuals in the first latent state, which we call "Closed," represent 36 \% of the samples. These individuals present an associative behavior centered on two voluntary associations: neighborhood and religious. A particular aspect of this type of association is that they have solid territorial roots and which limits their ability to influence the local sphere. For its part, the latent state or class two, which we call "brokers," comprises individuals with probabilities of over .35 memberships in all types of voluntary associations, highlighting the likelihood of being a member of charitable organizations, professionals, and unions. This group and its multiple memberships facilitate articulation, the flow of information, and contagion (e.g., cultural) between different types of associations. This can be considered a structural quality that gives an advantage to individuals while contributing to organizational development and connectivity of the civil society field. Finally, class or state 3 is the majority since it represents 54\% of the sample. We call this class of individuals "apathetic" since they present very low probabilities of participating in associative types. It is worth noting that this pattern of associative behavior has been analyzed and conceptualized as a tendency to withdraw to the private space.
+
+
 
 
 % latex table generated in R 4.1.2 by xtable 1.8-4 package
@@ -223,7 +227,12 @@ Intercept & -1.66** & 1.56*** \\
 \end{threeparttable}
 \end{table}
 
-
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=11cm]{output/plot_transition.png}
+    \caption{Averaged transition probabilities}
+    \label{fig:galaxy}
+\end{figure}
 
 
 \section{Discussion}
