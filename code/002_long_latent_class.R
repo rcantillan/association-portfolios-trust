@@ -111,9 +111,9 @@ plot(modelo3, what="CondProb")
 ## Graficar modelo 3
 LMmodelo3 <- reshape2::melt(modelo3$Psi, level=1)
 LMmodelo3 = LMmodelo3 %>%
-  dplyr::mutate (clase       = case_when(state      == 1 ~ "Class 1: Closed \n(36%)",
-                                         state      == 2 ~ "Class 2: Broker \n(10%)",
-                                         state      == 3 ~ "Class 3: Apathetic \n(54%)")) %>%
+  dplyr::mutate (clase       = case_when(state      == 1 ~ "Class 1\n Closed (36%)",
+                                         state      == 2 ~ "Class 2\n Broker (10%)",
+                                         state      == 3 ~ "Class 3\n Apathetic (54%)")) %>%
   dplyr::mutate (category    = case_when(category   == 0 ~ "no (not member)",
                                          category   == 1 ~ "yes (member)")) 
 
