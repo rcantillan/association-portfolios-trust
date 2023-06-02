@@ -105,10 +105,39 @@ options(scipen=999)
 print(xtable(Be, type = "latex"), file = "output/multinom_coeff.tex")
 print(xtable(p, type = "latex"), file = "output/multinom_pvaluestex")
 
-
-
 # Probabilidades iniciales 
 plot(modelo3, what="CondProb")
+
+## Graficar modelo 3
+LMmodelo3 <- reshape2::melt(modelo3$Psi, level=1)
+LMmodelo3 = LMmodelo3 %>%
+  dplyr::mutate (clase       = case_when(state      == 1 ~ "Class 1: Closed \n(36%)",
+                                         state      == 2 ~ "Class 2: Broker \n(10%)",
+                                         state      == 3 ~ "Class 3: Apathetic \n(54%)")) %>%
+  dplyr::mutate (category    = case_when(category   == 0 ~ "no (not member)",
+                                         category   == 1 ~ "yes (member)")) 
+
+LMmodelo3$item <- plyr::mapvalues(LMmodelo3$item, 
+                              c('1','2','3','4','5','6','7','8'),
+                              c("neighborhood","religious","political","union","professional","charity","sports","student"))
+level_order <- c("neighborhood","religious","charity","political","union","professional","sports","student") 
+
+
+## plot 
+p1 <- ggplot(LMmodelo3,aes(x = factor(item, level = level_order), y = value, fill = category))
+p1 <- p1 + geom_bar(stat = "identity", position = "stack") 
+p1 <- p1 + facet_grid(clase ~ .) 
+p1 <- p1 + scale_fill_manual(values = c("#28282B", "#3F00FF")) 
+p1 <- p1 + labs(x = "",y="", fill ="") + theme(text = element_text(size=15))
+p1 <- p1 + theme(axis.ticks.y=element_blank(),
+                   legend.position = "left",
+                   panel.grid.major.y=element_blank(),
+                   plot.title = element_text(hjust = 0.5, size = 8),
+                   axis.title = element_text(size=10),
+                   axis.text.x = element_text(size = 11,angle = 45, hjust = 0.9),
+                   axis.text.y = element_text(size = 9))
+p1 <- p1 + guides(fill = guide_legend(reverse=F))
+print(p1)
 
 # Distribución marginal
 plot(modelo3, what="marginal")
