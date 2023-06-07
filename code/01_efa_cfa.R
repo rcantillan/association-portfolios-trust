@@ -3,7 +3,9 @@
 pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,survey,
                kableExtra,scales,panelr,sjPlot,sjlabelled,sjmisc,stargazer,skimr,texreg,
                igraph, signnet, ggraph, extrafont, forcats, xtable, Hmisc, psych, psy,
-               nFactors, GPArotation, psychTools, here)
+               nFactors, GPArotation, psychTools, here, semTools, influence.SEM, lavaan,
+               semPlot, car, stringr)
+
 
 # load data
 load(here::here("data/ELSOC_Long.RData"))
@@ -104,8 +106,6 @@ fa2latex(fa3, caption = "Análisis Factorial Exploratorio Ola 6", heading = " ")
 # Ver resultados del modelo que mejor ajusta
 fa.diagram(fa3, main = "Factores sugeridos")
 
-
-
 # Ver cargas de items
 EFA_model$loadings
 head(EFA_model$scores)
@@ -117,17 +117,167 @@ EFA_model3$BIC
 EFA_model4$BIC
 
 
-# CFA 
+# EFA confianza social generalizada 
+# load data
+load(here::here("data/ELSOC_Long.RData"))
+
+# seleccionar variables 
+a=elsoc_long_2016_2022;rm(elsoc_long_2016_2022)
+a_full<-a%>%
+  filter(ola==1 | ola==3 | ola==6) %>%
+  dplyr::mutate (c02 = case_when(c02 == 1 ~ 1, c02 == 2 ~ 0, c02 == 3 ~ 1)) %>% 
+  dplyr::mutate (c03 = case_when(c03 == 1 ~ 1, c03 == 2 ~ 0, c03 == 3 ~ 1)) %>%
+  dplyr::mutate (c04 = case_when(c04 == 1 ~ 0, c04 == 2 ~ 1, c04 == 3 ~ 1)) %>%
+  select(idencuesta, ola, ponderador02, m0_sexo, m0_edad, m01, 
+         c02,c03,c04)
+
+a_full[a_full=="-999"] <- NA
+a_full[a_full=="-888"] <- NA
+a_full=na.omit(a_full)
+
+# EFA ola 1 
+## trasnformar a factor  
+asoc_ola1<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
+  filter(ola==1)%>%
+  select(c02,c03,c04)
+
+## correlation matrix
+het_asoc_ola1 <- hetcor(asoc_ola1)$cor
+ggcorrplot(het_asoc_ola1, hc.order = F, type = "lower", outline.col = "white")
+KMO(het_asoc_ola1) 
+
+## factor analysis
+scree.plot(het_asoc_ola1)   
+fa.parallel(het_asoc_ola1, n.obs=300)  
+
+fa <- fa(r = het_asoc_ola1, nfactors = 1, n.obs = nrow(asoc_ola1), rotate = "varimax")
+summary(fa)
+fa2latex(fa, caption = "Análisis Factorial Exploratorio Ola 1", heading = " ")
+
+# Ver resultados del modelo que mejor ajusta
+fa.diagram(fa, main = "Factores sugeridos")
+
+
+# EFA ola 3
+## trasnformar a factor  
+asoc_ola3<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
+  filter(ola==3)%>%
+  select(c02,c03,c04)
+
+## correlation matrix
+het_asoc_ola3 <- hetcor(asoc_ola3)$cor
+ggcorrplot(het_asoc_ola3, hc.order = F, type = "lower", outline.col = "white")
+KMO(het_asoc_ola3) 
+
+## factor analysis
+scree.plot(het_asoc_ola3)   
+fa.parallel(het_asoc_ola3, n.obs=300)  
+
+fa2 <- fa(r = het_asoc_ola3, nfactors = 1, n.obs = nrow(asoc_ola3), rotate = "varimax")
+fa2latex(fa2, caption = "Análisis Factorial Exploratorio Ola 3", heading = " ")
+
+# Ver resultados del modelo que mejor ajusta
+fa.diagram(fa2, main = "Factores sugeridos")
+
+
+# EFA ola 6
+## trasnformar a factor  
+asoc_ola6<-a_full %>% mutate_at(vars(matches("c12")), as.factor)%>%
+  filter(ola==6)%>%
+  select(c02,c03,c04)
+
+## correlation matrix
+het_asoc_ola6 <- hetcor(asoc_ola6)$cor
+ggcorrplot(het_asoc_ola6, hc.order = F, type = "lower", outline.col = "white")
+KMO(het_asoc_ola6) 
+
+## factor analysis
+scree.plot(het_asoc_ola6)   
+fa.parallel(het_asoc_ola6, n.obs=300)  
+
+fa3 <- fa(r = het_asoc_ola6, nfactors = 1, n.obs = nrow(asoc_ola6), rotate = "varimax")
+fa
+fa2latex(fa3, caption = "Análisis Factorial Exploratorio Ola 6", heading = " ")
+
+# Ver resultados del modelo que mejor ajusta
+fa.diagram(fa3, main = "Factores sugeridos")
+
+
+# CFA (confianza generalizada) ------------------------------------------------
+## Ajustar modelo de ecuaciones estructurales SEM
+
+m1 <- "
+  # Factoriales
+  CONF         =~ c02 + w*c03 + w*c04
+  "
+#CONF         =~ c02 + w*c03 + w*c04
+
+#Evaluar ajuste del modelo ola 1 --------------------------
+conf_ola1<-a_full %>% filter(ola==1)%>% select(ponderador02,c02,c03,c04)
+
+m1_fit <- sem(m1, data = conf_ola1, std.lv=F,  
+               ordered = c("c02", "c03", "c04"), 
+               sampling.weights = "ponderador02", 
+               estimator = "ULSMV")
+
+#Evaluar
+
+summary(m1_fit, 
+        fit.measure=TRUE, 
+        standardized=TRUE, 
+        rsquare = TRUE)
+
+
+parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
+fitted(m1_fit) ##Tabla de covarianzas 
+residuals(m1_fit) ##Residuos
+fitmeasures(m1_fit) ##Indices de ajuste
+modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
+
+
+#Evaluar ajuste del modelo ola 3 --------------------------
+conf_ola3<-a_full %>% filter(ola==3)%>% select(ponderador02,c02,c03,c04)
+
+m1_fit <- sem(m1, data = conf_ola3, std.lv=F,  
+              ordered = c("c02", "c03", "c04"), 
+              sampling.weights = "ponderador02", 
+              estimator = "ULSMV")
+
+#Evaluar
+
+summary(m1_fit, 
+        fit.measure=TRUE, 
+        standardized=TRUE, 
+        rsquare = TRUE)
+
+
+parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
+fitted(m1_fit) ##Tabla de covarianzas 
+residuals(m1_fit) ##Residuos
+fitmeasures(m1_fit) ##Indices de ajuste
+modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
 
 
 
+#Evaluar ajuste del modelo ola 6 --------------------------
+conf_ola6<-a_full %>% filter(ola==6)%>% select(ponderador02,c02,c03,c04)
+m1_fit <- sem(m1, data = conf_ola6, std.lv=F,  
+              ordered = c("c02", "c03", "c04"), 
+              sampling.weights = "ponderador02", 
+              estimator = "ULSMV")
+
+#Evaluar
+summary(m1_fit, 
+        fit.measure=TRUE, 
+        standardized=TRUE, 
+        rsquare = TRUE)
 
 
-
-
-
-
-
+parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
+fitted(m1_fit) ##Tabla de covarianzas 
+residuals(m1_fit) ##Residuos
+fitmeasures(m1_fit) ##Indices de ajuste
+modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
 
 
 

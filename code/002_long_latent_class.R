@@ -193,7 +193,7 @@ seBe<-as.data.frame(modelo3$seBe)
 z <- modelo3$Be/modelo3$seBe
 p <- (1 - pnorm(abs(z), 0, 1))*2 # two-tailed z test
 
-## Estimar errores estandar con bootstrap paramétrico
+## Estimar errores estandar con bootstrap paramétrico **(no estimar)**
 mboot <- bootstrap(modelo3, n = 581, B = 2, seed = 172)
 
 ## Tablas
@@ -232,21 +232,14 @@ ggplot(LMmodelo3,aes(x = factor(item, level = level_order), y = value, fill = ca
                    axis.title = element_text(size=10),
                    axis.text.x = element_text(size = 11,angle = 45, hjust = 0.9),
                    axis.text.y = element_text(size = 9)) +
-  guides(fill = guide_legend(reverse=F))
+  guides(fill = guide_legend(reverse=F)) 
 
 
 # Distribución marginal
 plot(modelo3, what="marginal")
 
 # Transiciones
-plot(modelo3,what="transitions")
-
-
-
-
-
-
-
+plot(modelo3,what="transitions") # figura 3. 
 
 
 
