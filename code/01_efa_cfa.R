@@ -135,6 +135,22 @@ a_full[a_full=="-999"] <- NA
 a_full[a_full=="-888"] <- NA
 a_full=na.omit(a_full)
 
+## plot items
+a_plot_ola1<-a_full %>% 
+  filter(ola==1)%>%
+  select(c02,c03,c04) %>%
+  mutate_at(vars(matches("c")), ~ifelse(. == 1, "si", "no"))%>%
+  mutate_if(is.character, as.factor)
+
+set_theme(legend.pos = "top")
+plot_likert(a_plot_ola1,
+            geom.colors = c("#3F00FF","#28282B"),
+            axis.labels=c("Confianza gral.", "Altruismo gral.", "La gente trata de ser justa"),
+            reverse.colors=F,
+            #cat.neutral=NULL,
+            values="sum.outside",
+            show.prc.sign=F)
+
 # EFA ola 1 
 ## trasnformar a factor  
 conf_ola1<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
@@ -159,6 +175,21 @@ fa.diagram(fa, main = "Factores sugeridos")
 
 
 # EFA ola 3
+a_plot_ola3<-a_full %>% 
+  filter(ola==3)%>%
+  select(c02,c03,c04) %>%
+  mutate_at(vars(matches("c")), ~ifelse(. == 1, "si", "no"))%>%
+  mutate_if(is.character, as.factor)
+
+set_theme(legend.pos = "top")
+plot_likert(a_plot_ola1,
+            geom.colors = c("#3F00FF","#28282B"),
+            axis.labels=c("Confianza gral.", "Altruismo gral.", "La gente trata de ser justa"),
+            reverse.colors=F,
+            #cat.neutral=NULL,
+            values="sum.outside",
+            show.prc.sign=F)
+
 ## trasnformar a factor  
 conf_ola3<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
   filter(ola==3)%>%
@@ -181,6 +212,21 @@ fa.diagram(fa2, main = "Factores sugeridos")
 
 
 # EFA ola 6
+a_plot_ola6<-a_full %>% 
+  filter(ola==6)%>%
+  select(c02,c03,c04) %>%
+  mutate_at(vars(matches("c")), ~ifelse(. == 1, "si", "no"))%>%
+  mutate_if(is.character, as.factor)
+
+#set_theme(legend.pos = "top")
+plot_likert(a_plot_ola1,
+            geom.colors = c("#3F00FF","#28282B"),
+            axis.labels=c("Confianza gral.", "Altruismo gral.", "La gente trata de ser justa"),
+            reverse.colors=F,
+            #cat.neutral=NULL,
+            values="sum.outside",
+            show.prc.sign=F)
+
 ## trasnformar a factor  
 conf_ola6<-a_full %>% mutate_at(vars(matches("c12")), as.factor)%>%
   filter(ola==6)%>%
