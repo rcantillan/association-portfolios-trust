@@ -4,7 +4,7 @@ pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,sur
                kableExtra,scales,panelr,sjPlot,sjlabelled,sjmisc,stargazer,skimr,texreg,
                igraph, signnet, ggraph, extrafont, forcats, xtable, Hmisc, psych, psy,
                nFactors, GPArotation, psychTools, here, semTools, influence.SEM, lavaan,
-               semPlot, car, stringr)
+               semPlot, car, stringr, semTable)
 
 
 # load data
@@ -137,12 +137,12 @@ a_full=na.omit(a_full)
 
 # EFA ola 1 
 ## trasnformar a factor  
-asoc_ola1<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
+conf_ola1<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
   filter(ola==1)%>%
   select(c02,c03,c04)
 
 ## correlation matrix
-het_asoc_ola1 <- hetcor(asoc_ola1)$cor
+het_asoc_ola1 <- hetcor(conf_ola1)$cor
 ggcorrplot(het_asoc_ola1, hc.order = F, type = "lower", outline.col = "white")
 KMO(het_asoc_ola1) 
 
@@ -160,12 +160,12 @@ fa.diagram(fa, main = "Factores sugeridos")
 
 # EFA ola 3
 ## trasnformar a factor  
-asoc_ola3<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
+conf_ola3<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
   filter(ola==3)%>%
   select(c02,c03,c04)
 
 ## correlation matrix
-het_asoc_ola3 <- hetcor(asoc_ola3)$cor
+het_asoc_ola3 <- hetcor(conf_ola3)$cor
 ggcorrplot(het_asoc_ola3, hc.order = F, type = "lower", outline.col = "white")
 KMO(het_asoc_ola3) 
 
@@ -182,12 +182,12 @@ fa.diagram(fa2, main = "Factores sugeridos")
 
 # EFA ola 6
 ## trasnformar a factor  
-asoc_ola6<-a_full %>% mutate_at(vars(matches("c12")), as.factor)%>%
+conf_ola6<-a_full %>% mutate_at(vars(matches("c12")), as.factor)%>%
   filter(ola==6)%>%
   select(c02,c03,c04)
 
 ## correlation matrix
-het_asoc_ola6 <- hetcor(asoc_ola6)$cor
+het_asoc_ola6 <- hetcor(conf_ola6)$cor
 ggcorrplot(het_asoc_ola6, hc.order = F, type = "lower", outline.col = "white")
 KMO(het_asoc_ola6) 
 
@@ -215,7 +215,7 @@ m1 <- "
 #Evaluar ajuste del modelo ola 1 --------------------------
 conf_ola1<-a_full %>% filter(ola==1)%>% select(ponderador02,c02,c03,c04)
 
-m1_fit <- sem(m1, data = conf_ola1, std.lv=F,  
+m1_fit <- sem(m1, data = conf_ola1, std.lv=T,  
                ordered = c("c02", "c03", "c04"), 
                sampling.weights = "ponderador02", 
                estimator = "ULSMV")
@@ -227,63 +227,76 @@ summary(m1_fit,
         standardized=TRUE, 
         rsquare = TRUE)
 
-
-parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
-fitted(m1_fit) ##Tabla de covarianzas 
-residuals(m1_fit) ##Residuos
-fitmeasures(m1_fit) ##Indices de ajuste
-modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
-
+vlabs <- c(c02 = "Confianza gral." , c03 = "Altruismo gral." , c04 = "La gente trata de ser justa")
+m3_fit_table <- semTable(m1_fit, columns = c("estse", "p"), 
+                         paramSets = c("loadings"), 
+                         fits = c("chisq" , "rmsea"),  
+                         file =  "output/m3_fit_table",
+                         varLabels = vlabs,
+                         type = "latex", 
+                         caption = "CFA generalized trust ola 1", 
+                         label = "tab : conf1", 
+                         longtable = TRUE,
+                         table.float = TRUE)
 
 #Evaluar ajuste del modelo ola 3 --------------------------
 conf_ola3<-a_full %>% filter(ola==3)%>% select(ponderador02,c02,c03,c04)
 
-m1_fit <- sem(m1, data = conf_ola3, std.lv=F,  
+m2_fit <- sem(m1, data = conf_ola3, std.lv=T,  
               ordered = c("c02", "c03", "c04"), 
               sampling.weights = "ponderador02", 
               estimator = "ULSMV")
 
 #Evaluar
 
-summary(m1_fit, 
+summary(m2_fit, 
         fit.measure=TRUE, 
         standardized=TRUE, 
         rsquare = TRUE)
 
-
-parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
-fitted(m1_fit) ##Tabla de covarianzas 
-residuals(m1_fit) ##Residuos
-fitmeasures(m1_fit) ##Indices de ajuste
-modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
-
+m3_fit_table <- semTable(m2_fit, columns = c("estse", "p"), 
+                         paramSets = c("loadings"), 
+                         fits = c("chisq" , "rmsea"),  
+                         file =  "output/m3_fit_table",
+                         varLabels = vlabs,
+                         type = "latex", 
+                         caption = "CFA generalized trust ola 3", 
+                         label = "tab : conf2", 
+                         longtable = TRUE,
+                         table.float = TRUE)
 
 
 #Evaluar ajuste del modelo ola 6 --------------------------
 conf_ola6<-a_full %>% filter(ola==6)%>% select(ponderador02,c02,c03,c04)
-m1_fit <- sem(m1, data = conf_ola6, std.lv=F,  
+m3_fit <- sem(m1, data = conf_ola6, std.lv=T,  
               ordered = c("c02", "c03", "c04"), 
               sampling.weights = "ponderador02", 
               estimator = "ULSMV")
 
 #Evaluar
-summary(m1_fit, 
+summary(m3_fit, 
         fit.measure=TRUE, 
         standardized=TRUE, 
         rsquare = TRUE)
 
 
-parameterestimates(m1_fit, standardized=TRUE) ##CIs para parámetros
-fitted(m1_fit) ##Tabla de covarianzas 
-residuals(m1_fit) ##Residuos
+parameterestimates(m3_fit, standardized=TRUE) ##CIs para parámetros
+fitted(m3_fit) ##Tabla de covarianzas 
+residuals(m3_fit) ##Residuos
 fitmeasures(m1_fit) ##Indices de ajuste
-modificationindices(m1_fit, sort. = TRUE) ##Indices de modifación 
+modificationindices(m3_fit, sort. = TRUE) ##Indices de modifación 
 
 
-
-
-
-
+m3_fit_table <- semTable(m3_fit, columns = c("estse", "p"), 
+                   paramSets = c("loadings"), 
+                   fits = c("chisq" , "rmsea"),  
+                   file =  "output/m3_fit_table",
+                   varLabels = vlabs,
+                   type = "latex", 
+                   caption = "CFA generalized trust", 
+                   label = "tab : conf3", 
+                   longtable = TRUE,
+                   table.float = TRUE)
 
 
 
