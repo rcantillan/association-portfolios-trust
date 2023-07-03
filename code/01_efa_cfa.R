@@ -159,7 +159,7 @@ conf_ola1<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
 
 ## correlation matrix
 het_asoc_ola1 <- hetcor(conf_ola1)$cor
-ggcorrplot(het_asoc_ola1, hc.order = F, type = "lower", outline.col = "white")
+ggcorrplot(het_asoc_ola1, hc.order = F, type = "lower", outline.col = "white",lab = TRUE)
 KMO(het_asoc_ola1) 
 
 ## factor analysis
@@ -169,6 +169,7 @@ fa.parallel(het_asoc_ola1, n.obs=300)
 fa <- fa(r = het_asoc_ola1, nfactors = 1, n.obs = nrow(asoc_ola1), rotate = "varimax")
 summary(fa)
 fa2latex(fa, caption = "Análisis Factorial Exploratorio Ola 1", heading = " ")
+xtable(unclass(fa2$loadings))
 
 # Ver resultados del modelo que mejor ajusta
 fa.diagram(fa, main = "Factores sugeridos")
@@ -182,7 +183,7 @@ a_plot_ola3<-a_full %>%
   mutate_if(is.character, as.factor)
 
 set_theme(legend.pos = "top")
-plot_likert(a_plot_ola1,
+plot_likert(a_plot_ola3,
             geom.colors = c("#3F00FF","#28282B"),
             axis.labels=c("Confianza gral.", "Altruismo gral.", "La gente trata de ser justa"),
             reverse.colors=F,
@@ -197,7 +198,7 @@ conf_ola3<-a_full %>% mutate_at(vars(matches("c")), as.factor)%>%
 
 ## correlation matrix
 het_asoc_ola3 <- hetcor(conf_ola3)$cor
-ggcorrplot(het_asoc_ola3, hc.order = F, type = "lower", outline.col = "white")
+ggcorrplot(het_asoc_ola3, hc.order = F, type = "lower", outline.col = "white",lab = TRUE)
 KMO(het_asoc_ola3) 
 
 ## factor analysis
@@ -206,6 +207,8 @@ fa.parallel(het_asoc_ola3, n.obs=300)
 
 fa2 <- fa(r = het_asoc_ola3, nfactors = 1, n.obs = nrow(asoc_ola3), rotate = "varimax")
 fa2latex(fa2, caption = "Análisis Factorial Exploratorio Ola 3", heading = " ")
+xtable(unclass(fa2$loadings))
+
 
 # Ver resultados del modelo que mejor ajusta
 fa.diagram(fa2, main = "Factores sugeridos")
@@ -219,7 +222,7 @@ a_plot_ola6<-a_full %>%
   mutate_if(is.character, as.factor)
 
 #set_theme(legend.pos = "top")
-plot_likert(a_plot_ola1,
+plot_likert(a_plot_ola6,
             geom.colors = c("#3F00FF","#28282B"),
             axis.labels=c("Confianza gral.", "Altruismo gral.", "La gente trata de ser justa"),
             reverse.colors=F,
@@ -234,7 +237,7 @@ conf_ola6<-a_full %>% mutate_at(vars(matches("c12")), as.factor)%>%
 
 ## correlation matrix
 het_asoc_ola6 <- hetcor(conf_ola6)$cor
-ggcorrplot(het_asoc_ola6, hc.order = F, type = "lower", outline.col = "white")
+ggcorrplot(het_asoc_ola6, hc.order = F, type = "lower", outline.col = "white",lab = TRUE)
 KMO(het_asoc_ola6) 
 
 ## factor analysis
@@ -244,6 +247,7 @@ fa.parallel(het_asoc_ola6, n.obs=300)
 fa3 <- fa(r = het_asoc_ola6, nfactors = 1, n.obs = nrow(asoc_ola6), rotate = "varimax")
 fa
 fa2latex(fa3, caption = "Análisis Factorial Exploratorio Ola 6", heading = " ")
+xtable(unclass(fa3$loadings))
 
 # Ver resultados del modelo que mejor ajusta
 fa.diagram(fa3, main = "Factores sugeridos")
@@ -343,9 +347,6 @@ m3_fit_table <- semTable(m3_fit, columns = c("estse", "p"),
                    label = "tab : conf3", 
                    longtable = TRUE,
                    table.float = TRUE)
-
-
-
 
 
 

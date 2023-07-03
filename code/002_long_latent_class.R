@@ -241,7 +241,13 @@ plot(modelo3, what="marginal")
 # Transiciones
 plot(modelo3,what="transitions") # figura 3. 
 
-
-
+# Pivot wider and cbind
+d1<-modelo3[["data"]]%>%select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ)
+d1<- panel_data(d1, id = idencuesta, wave = ola) 
+d1_wide<-d1<-panelr::widen_panel(d1, separator = "_")
+mseq<-modelo3[["Ul"]] #matrix containing the predicted sequence of latent states by the local decoding method
+mseq<-as_tibble(mseq); colnames(mseq)<-c("e1", "e2", "e3")
+d1_wide<-cbind(d1_wide,mseq)
+save(d1_wide, file = "data/d1_wide.RData")
 
 
