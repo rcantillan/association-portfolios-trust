@@ -34,7 +34,7 @@ a_full<-a%>%
                                          m01 %in% 4 :5 ~ "media",
                                          m01 %in% 6 :7 ~ "técnica",
                                          m01 %in% 8 :10 ~ "univers")) %>%
-  select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ, 
+  select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ, c02,c03,c04,
          c12_01, c12_02, c12_03, c12_04, c12_05, c12_06, c12_07, c12_08)
 
 # set NA
@@ -194,7 +194,7 @@ z <- modelo3$Be/modelo3$seBe
 p <- (1 - pnorm(abs(z), 0, 1))*2 # two-tailed z test
 
 ## Estimar errores estandar con bootstrap paramétrico **(no estimar)**
-mboot <- bootstrap(modelo3, n = 581, B = 2, seed = 172)
+#mboot <- bootstrap(modelo3, n = 581, B = 2, seed = 172)
 
 ## Tablas
 options(scipen=999)
@@ -242,7 +242,7 @@ plot(modelo3, what="marginal")
 plot(modelo3,what="transitions") # figura 3. 
 
 # Pivot wider and cbind
-d1<-modelo3[["data"]]%>%select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ)
+d1<-modelo3[["data"]]%>%select(idencuesta, ola, ponderador02, mujer, edad, nivel_educ,c02,c03,c04)
 d1<- panel_data(d1, id = idencuesta, wave = ola) 
 d1_wide<-d1<-panelr::widen_panel(d1, separator = "_")
 mseq<-modelo3[["Ul"]] #matrix containing the predicted sequence of latent states by the local decoding method
