@@ -81,17 +81,6 @@ As the state withdrew from its basic functions, it put out to tender the space o
 
 \section{Theory}
 
-The intuition that the large-scale patterns of associations in society can tell us something important about the behaviors that dates back at least to Simmel's work on the interconnected web of group affiliations \parencite{centola_how_2018}.
-
-Confidence in others (unknown) is one of the lowest compared to other countries in the region (Latinobarómetro). The "infrasocialized" explanations point to individuation processes marked by the ideology of individualistic entrepreneurship \parencite{araujo_desafios_2012, yopo_individualizacion_2013}. The "over-socialized" explanations point to the pressure of a system of norms that leaves little room for collective action and the development of public interest \parencite{oxhorn_neopluralism_2004}. Low civic rates and general collective participation \parencite{espinoza_capital_2009}.
-
-- ciucuito de conectividad que desarrollan los individuos 
-
-
-Chile has the lowest level of confidence in others (unknown) in the region (Latinobarómetro). This finding could be understand 
-
-Infrasocialized explanations point to process of individualization characterized byan individualist entrepreneur'sideology
-
 \subsection{The structural bases}
 
 The importance of memberships and patterns of interaction between voluntary associations is by no means a new idea \parencite{diani_cement_2015, sorenson_when_2014}. However, even though much of the research is based on an underlying relational theory, much of the analytical work uses aggregative descriptions to identify patterns of composition of civil society \parencite{salamon_social_1998} or ideational indicators of "cohesion" to describe the benefits of memberships \parencite{paxton_social_2002, paxton_association_2007,putnam_making_1994}. Political sociologists focus on how a cohesive civil society promotes democracy \parencite{paxton_is_1999, putnam_bowling_2000}.  Historical sociologists point to the importance of solidarity for revolutionary action \parencite{bearman_structure_1993, gould_multiple_1991}. Social epidemiologists argue that a cohesive "core" is responsible for the persistence of sexually transmitted diseases \parencite{rothenberg_personal_1996}. \textbf{We need to close the idea of this paragraph. What is the main purpose in this paragraph?}
@@ -378,7 +367,7 @@ Intercept & -1.66** & 1.56*** \\
 \end{threeparttable}
 \end{table}
 
-Table 4 contains the estimated regression parameters that affect the distribution of the initial probabilities obtained with Equation 5. The logarithmic possibilities of gender are all negative, indicating that initially (time 1), women are less likely to belong to the latent states "runner" and "listless." On the other hand, individuals in the "intermediate" class are more likely to have higher educational levels than the "closed" class. The same is true for the "apathetic" class. Specifically, for the "broker" class, the odds ratio of having a college education is 25 times higher, and for the "apathetic" class, it is 4.8 times higher, in contrast to the "closed" class.
+Table 4 contains the estimated regression parameters that affect the distribution of the initial probabilities obtained with Equation 5. The logarithmic possibilities of gender are all negative, indicating that initially (time 1), women are less likely to belong to the latent states "broker" and "apathetic." On the other hand, individuals in the "broker" class are more likely to have higher educational levels than the "closed" class. The same is true for the "apathetic" class. Specifically, for the "broker" class, the odds ratio of having a college education is 25 times higher, and for the "apathetic" class, it is 4.8 times higher, in contrast to the "closed" class.
 
 
 \begin{figure}[htp]
@@ -390,15 +379,25 @@ Table 4 contains the estimated regression parameters that affect the distributio
 
 \begin{figure}[htp]
     \centering
-    \includegraphics[width=11cm]{output/plot_transition.png}
-    \caption{Averaged transition probabilities}
-        \label{fig:trans}
+    \includegraphics[width=13cm]{output/emd_plot.png}
+    \caption{Estimated marginal distribution}
+        \label{fig:emd}
 \end{figure}
 
 \hfill
 
-Adicionalmente, la figura 4 es diagrama de caminos construidos a partir de las probabilidades de transición estimadas en el modelo de clases latentes (Markov). 
+Figure 4 shows a path diagram constructed from the averaged estimated transition probabilities in the latent class (Markov) model. The graph shows high persistence in class 1 (apathetic) and class 3 (closed), respectively. Class 2 (broker) is the most fluctuating, with those who go through this "state" or class having a 36\% probability of maintaining this extensive associative behavior. In turn, those who are in this state have a 25\% chance of going to state 3 (apathetic) and a 39\% chance of going to state 1 (closed).
+\bigskip
 
+It is expected that, although this type of behavior can bring benefits at the individual level (greater probability of accessing various resources) and at the social level (generalized trust), it is difficult to maintain and that there are moments of greater or lesser linkage activity in various groups by individuals, which also depends on the changing needs and purposes of individuals.
+\bigskip
+
+There are several reasons for this. First, the context does not facilitate associative activity \parencite{oxhorn_neopluralism_2004}. Oxhorn \parencite*{oxhorn_neopluralism_2004} suggests that high levels of inequality and concentration of resources are detrimental to individual abilities to establish and maintain membership in voluntary associations and groups to sustain broad collective action. In individual terms, this suggests that economic insecurity has limited the ability of workers and other economically disadvantaged groups to participate in the public sphere, while also eroding their willingness to participate: "the need to survive from day to day can make the public participation and collective action seem, at best, a luxury one can no longer afford and, at worst, wasted effort" (Oxhorn, 2004, p. 302). This may explain not only the low levels of membership reported, but also the low probability of maintaining associative behaviors that contribute to the integration of the field through multiple affiliations.
+
+For its part, Figure 5 illustrates the estimated marginal distribution for each occasion or (time) of the latent states. The figure shows great stability in the size of latencies with a slight drop in proportion to the size of class 3 (apathetic) and a rise in the ratio of the size of the latent state 1 (closed). 
+
+
+\subsection{Regression analysis}
 
 As we mentioned before, the latent class approach allows us to cluster the membership in social organizations and identify three type of classes, such as closed, broker, and apathetic. This classification is our independent variable of interest to understand how associative behavior is related to trust. The following equation represent the empirical model of individual trust:
 
@@ -420,8 +419,16 @@ We now turn to the relationship between associative behavior patterns and trust.
 \input{output/table5}
 
 
-
 \section{Discussion}
+
+The intuition that the large-scale patterns of associations in society can tell us something important about the behaviors that dates back at least to Simmel's work on the interconnected web of group affiliations \parencite{centola_how_2018, simmel_conflict_1922}.
+\bigskip
+
+From here, sociological research has suggested that voluntary associations are focused on collective action that facilitate indirect interaction between individuals who share social attributes and experiences \parencite{mcpherson_hypernetwork_1982}. Therefore, it has been frequently indicated that memberships in voluntary associations can also be focis that facilitate the interaction of diverse social circles and, in this way, promotes social capital development at the individual level \parencite{tindall_network_2012} and integration in complex social systems \parencite{paxton_association_2007}. The argument developed here continues this tradition but emphasizes two things. The first is if this is occurring or not in a context of high material inequality and social fragmentation. The second is that the connectivity of the associations can be approximated from the behavior patterns detected by observing the multiple affiliations of the individuals. Here the link between the two associative types is membership shared by organizations, and the connection between individuals is shared membership in a kind of voluntary association. However, we focus on analyzing the associative behavior understood as an individual attribute.
+\bigskip
+
+Our work sought to deepen the analysis of the individual and collective consequences of membership in voluntary associations. We drew on the concept of "crosscutting social circles," developed by Blau and Schwartz \parencite*{blau_crosscutting_1997}, to understand how multiple memberships can benefit individuals and society. At the individual level, multiple memberships can offer opportunities to access scarce resources, such as information and social support. They can also help to broaden individuals' horizons of meaning and tolerance by exposing them to different perspectives and experiences. At the collective level, multiple memberships can operate as a mechanism for overlapping or intersecting social circles. This can help to promote cohesion within the organizational field and facilitate broad collective action. It can also increase the capacity of organizations to influence political decision-making. In general, multiple group affiliations promise greater chances of exposure to diversity, which is the basis for the development of widespread trust.
+
 
 \section{Conclusion}
 
