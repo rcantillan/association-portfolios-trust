@@ -349,7 +349,7 @@ Figure 2 illustrates the estimated conditional response probabilities \( \wideha
 
 % latex table generated in R 4.1.2 by xtable 1.8-4 package
 % Thu Jun  1 19:02:37 2023
-\begin{table}[H]
+\begin{table}[htp]
 \centering
 \begin{threeparttable}
 \caption{\label{demo-table} Multinomial regression}
@@ -378,7 +378,7 @@ Intercept & -1.66** & 1.56*** \\
 \end{threeparttable}
 \end{table}
 
-Table 3 contains the estimated regression parameters that affect the distribution of the initial probabilities obtained with Equation 5. The logarithmic possibilities of gender are all negative, indicating that initially (time 1), women are less likely to belong to the latent states "runner" and "listless." On the other hand, individuals in the "intermediate" class are more likely to have higher educational levels than the "closed" class. The same is true for the "apathetic" class. Specifically, for the "broker" class, the odds ratio of having a college education is 25 times higher, and for the "apathetic" class, it is 4.8 times higher, in contrast to the "closed" class.
+Table 4 contains the estimated regression parameters that affect the distribution of the initial probabilities obtained with Equation 5. The logarithmic possibilities of gender are all negative, indicating that initially (time 1), women are less likely to belong to the latent states "runner" and "listless." On the other hand, individuals in the "intermediate" class are more likely to have higher educational levels than the "closed" class. The same is true for the "apathetic" class. Specifically, for the "broker" class, the odds ratio of having a college education is 25 times higher, and for the "apathetic" class, it is 4.8 times higher, in contrast to the "closed" class.
 
 
 \begin{figure}[htp]
@@ -387,6 +387,38 @@ Table 3 contains the estimated regression parameters that affect the distributio
     \caption{Averaged transition probabilities}
         \label{fig:trans}
 \end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=11cm]{output/plot_transition.png}
+    \caption{Averaged transition probabilities}
+        \label{fig:trans}
+\end{figure}
+
+\hfill
+
+Adicionalmente, la figura 4 es diagrama de caminos construidos a partir de las probabilidades de transición estimadas en el modelo de clases latentes (Markov). 
+
+
+As we mentioned before, the latent class approach allows us to cluster the membership in social organizations and identify three type of classes, such as closed, broker, and apathetic. This classification is our independent variable of interest to understand how associative behavior is related to trust. The following equation represent the empirical model of individual trust:
+
+\begin{equation}
+trust_{ijt} = \alpha + \gamma class_{ijt} + \boldsymbol{\beta} \mathbf{X}_{ijt} + Z_{j} + C_{t} + \epsilon_{ijt}
+\end{equation}
+
+where the sub index \textit{i} represent the individuals, \textit{j} is used for communes, and \textit{t} represents time (wave $1$, $3$, and $6$). The \textbf{X} vector includes controls for socioeconomic and demographic variable related to our main dependent variable to reduce the bias by omitted these variables are age, sex, marital status, employment status, and a dummy variable for the level of education. The variable $Z$ represents a fixed effect at communal level, which capture some degree of heterogeneity across the space. The variable $C$ is a time fixed effect, a dummy variable for each wave, which captures changes in the time trends. Our main independent variable is $class$, which is a dummy variable that take three values, with a value of one assigned if the individual belongs to class 1 (closed), values of two if she belongs to class 2 (broker), and three if she belongs to class 3 (apathetic). Our primary independent variable is $class$, which is a dummy variable that takes three values, with a value of one assigned if the individual belongs to class 1 (closed), values of two if she belongs to class 2 (broker), and three if she belongs to class 3 (apathetic). Our primary dependent variable is $trust$, a dummy variable that takes a value of one if an individual always trusts others and zero otherwise. Finally, $\epsilon_{ijt}$ is the individual error term.
+
+\hfill
+
+We estimate equation (3) using the probit and random-effects probit models (REPM). The advantage of REPM is that it permits analysis at both the individual level and over time. Furthermore, it allows to estimate time-varying and time-invariant covariates in the longitudinal case. REPM considers the positive serial correlation in the error term, while the probit models ignore the correlation, then it is appropriate when the assumptions of homoscedasticity and/or non-correlation of the errors are not valid.
+
+\hfill
+
+We now turn to the relationship between associative behavior patterns and trust. Table \ref{tab:table5} presents estimates of Equation (3); our baseline specification is based on generalized trust as the dependent variable. The dependent variable in column 1 is generalized trust. We find that individuals belonging to Class 2 (broker) are, on average, $10\%$ more likely to report higher confidence than those belonging to Class 1 (closed). Class 3 (apathetic) is positive and statistically insignificant. Column 3 shows that when we use the REPM, the marginal effects decrease due to autoregressive serial correlation in the error term. The coefficient of Class 2 is significant and positive. It means belonging to Class 2 increases the probability of reporting trusting other people by approximately $4.4\%$ compared to those in Class 1. The dependent variable in columns 1 and 2 is neighborhood trust (NBHD trust); these estimations are statistically insignificant. The above results indicate that associative behavior patterns, measured by the three classes, are linked to a specific type of trust (generalized trust). In practical terms, the estimates indicate that greater exposure to diversity, Class 2, promotes higher levels of generalized trust.
+
+
+\input{output/table5}
+
 
 
 \section{Discussion}
