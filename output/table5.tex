@@ -1,0 +1,22 @@
+\begin{table}[htbp]\centering
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\caption{Marginal effects of associative behavior on trust \label{tab:table5}}
+\begin{tabular}{l*{4}{D{.}{.}{-1}}}
+\hline\hline
+            &\multicolumn{2}{c}{Probit model}           &\multicolumn{2}{c}{Random-effects probit model}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+            &\multicolumn{1}{c}{Gen. trust}&\multicolumn{1}{c}{NBHD trust}&\multicolumn{1}{c}{Gen. trust}&\multicolumn{1}{c}{NBHD trust}\\
+\hline
+Clase 2 (broker)&       0.101\sym{**} &       0.043         &       0.044\sym{*}  &       0.030         \\
+            &     (0.049)         &     (0.054)         &     (0.026)         &     (0.030)         \\
+[1em]
+Clase 3 (apathetic)&       0.004         &      -0.047         &      -0.000         &      -0.026         \\
+            &     (0.030)         &     (0.034)         &     (0.014)         &     (0.019)         \\
+\hline
+\(N\)       &        3846         &        3887         &        3846         &        3887         \\
+Time Effects&         Yes         &         Yes         &         Yes         &         Yes         \\
+Controls    &         Yes         &         Yes         &         Yes         &         Yes         \\
+\hline\hline
+\multicolumn{5}{l}{\footnotesize Robust standard errors in parentheses}\\
+\multicolumn{5}{l}{\footnotesize \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\)}\\
+\end{tabular}
+\end{table}
