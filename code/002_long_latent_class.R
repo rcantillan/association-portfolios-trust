@@ -8,7 +8,7 @@ pacman::p_load(tidyverse,jtools,polycor,ggplot2,ggstatsplot,ggcorrplot,broom,sur
 
 options(knitr.kable.NA = '')
 # load data
-load(here::here("data/ELSOC_Long.RData"))
+load(here::here("/home/rober/Documents/doctorado-UC/sem/sem_trabajo/data/ELSOC_Long.RData"))
 
 # seleccionar variables 
 a=elsoc_long_2016_2022;rm(elsoc_long_2016_2022)
@@ -17,7 +17,7 @@ a_full<-a%>%
   mutate(ola=case_when(ola==1~1,ola==3~2,ola==6~3))%>%
   mutate_at(vars(matches("r01")), ~ifelse(. > 2, 1, 0)) %>% 
   mutate_at(vars(matches("c12")), ~ifelse(. < 2, 0, 1)) %>% 
-  dplyr::mutate (conf_gral   = case_when(c02 == 1 ~ 1,  
+  dplyr::mutate (c02         = case_when(c02 == 1 ~ 1,  
                                          c02 == 2 ~ 0, 
                                          c02 == 3 ~ 1)) %>%
   dplyr::mutate (extranjero  = case_when(m45 %in% 1 ~ 0,
@@ -155,9 +155,9 @@ modelo1 <-  lmest(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c
                   start = 1,
                   #modBasic = 1,
                   modManifest="LM",
-                  seed = 123)
+                  seed = 1234)
 
-plot(modelo1,what="modSel") # de acuerdo con BIC sugiere modelo con 3 clases 
+plot(modelo1, what = "marginal") # de acuerdo con BIC sugiere modelo con 3 clases 
 
 ## Modelo selección de modelos 1:5 estados latentes. 
 mod_sel <- lmestSearch(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12_06+c12_07+c12_08~NULL,
@@ -168,9 +168,8 @@ mod_sel <- lmestSearch(responsesFormula = c12_01+c12_02+c12_03+c12_04+c12_05+c12
                    out_se = TRUE,
                    version ="categorical",
                    paramLatent = "multilogit",
-                   k = 1:5,
-                   #modBasic = 1, 
-                   seed = 123)
+                   k = 1:5, seed = 123)
+                   #modBasic = 1)
 
 summary(mod_sel) # de acuerdo con el BIC se selecciona modelo de 3 clases
 
@@ -183,9 +182,12 @@ states<-c(1,2,3,4,5);states<-as.data.frame(states)
 t1<-as.data.frame(c(states,lk,np,aic,bic));rm(states,lk,np,aic,bic)
 print(xtable(t1, type = "latex"), file = "output/fit1.tex")
 
+# reordenar
 # Modelo de mejor ajuste k=3 y tabla de regresión multinomial
 modelo3 <- mod_sel$out.single[[3]]
 summary(modelo3)
+plot(modelo3, what="CondProb")
+
 
 ## Resultados de regresión multinomial para describir grupos.
 Be<-as.data.frame(modelo3$Be)
@@ -194,7 +196,7 @@ z <- modelo3$Be/modelo3$seBe
 p <- (1 - pnorm(abs(z), 0, 1))*2 # two-tailed z test
 
 ## Estimar errores estandar con bootstrap paramétrico **(no estimar)**
-#mboot <- bootstrap(modelo3, n = 581, B = 2, seed = 172)
+mboot <- bootstrap(modelo3, B = 1000, seed = 172)
 
 ## Tablas
 options(scipen=999)
@@ -204,11 +206,14 @@ print(xtable(p, type = "latex"), file = "output/multinom_pvaluestex")
 # Probabilidades iniciales 
 plot(modelo3, what="CondProb")
 
+# probabilidades de transición------------------------------------------------------
+
+
 ## Graficar modelo 3
 LMmodelo3 <- reshape2::melt(modelo3$Psi, level=1)
 LMmodelo3 = LMmodelo3 %>%
-  dplyr::mutate (clase = case_when(state == 1 ~ "Class 1\n Closed (36%)",
-                                   state == 2 ~ "Class 2\n Broker (10%)",
+  dplyr::mutate (clase = case_when(state == 1 ~ "Class 2\n Closed (36%)",
+                                   state == 2 ~ "Class 1\n Broker (10%)",
                                    state == 3 ~ "Class 3\n Apathetic (54%)")) %>%
   dplyr::mutate (category = case_when(category == 0 ~ "no (not member)",
                                       category == 1 ~ "yes (member)")) 
@@ -226,12 +231,13 @@ ggplot(LMmodelo3,aes(x = factor(item, level = level_order), y = value, fill = ca
   scale_fill_manual(values = c("#28282B", "#3F00FF")) + 
   labs(x = "",y="", fill ="") + theme(text = element_text(size=15)) +
   theme(axis.ticks.y=element_blank(),
+        strip.text = element_text(size = 15),
                    #legend.position = "top",
                    panel.grid.major.y=element_blank(),
                    plot.title = element_text(hjust = 0.5, size = 8),
                    axis.title = element_text(size=10),
-                   axis.text.x = element_text(size = 11,angle = 45, hjust = 0.9),
-                   axis.text.y = element_text(size = 9)) +
+                   axis.text.x = element_text(size = 15,angle = 45, hjust = 0.9),
+                   axis.text.y = element_text(size = 11)) +
   guides(fill = guide_legend(reverse=F)) 
 
 
@@ -246,8 +252,48 @@ d1<-modelo3[["data"]]%>%select(idencuesta, ola, ponderador02, mujer, edad, nivel
 d1<- panel_data(d1, id = idencuesta, wave = ola) 
 d1_wide<-d1<-panelr::widen_panel(d1, separator = "_")
 mseq<-modelo3[["Ul"]] #matrix containing the predicted sequence of latent states by the local decoding method
-mseq<-as_tibble(mseq); colnames(mseq)<-c("e1", "e2", "e3")
+mseq<-as_tibble(mseq); colnames(mseq)<-c("e_1", "e_2", "e_3")
 d1_wide<-cbind(d1_wide,mseq)
-save(d1_wide, file = "data/d1_wide.RData")
+#save(d1_wide, file = "data/d1_wide.RData")
+#rm(d1_wide)
+
+
+# Probabilidades individuales de transición. 
+trans_ind <- modelo3$V   
+
+tras_ind1 <- trans_ind[, , 1]
+colnames(tras_ind1) <- c("t1_t2_clase1", "t1_t2_clase2", "t1_t2_clase3")
+tras_ind1 <- as_tibble(tras_ind1)
+
+tras_ind2 <- trans_ind[, , 2]
+colnames(tras_ind2) <- c("t1_t3_clase1", "t1_t3_clase2", "t1_t3_clase3")
+tras_ind2 <- as_tibble(tras_ind2)
+
+tras_ind3 <- trans_ind[, , 3]
+colnames(tras_ind3) <- c("t2_t3_clase1", "t2_t3_clase2", "t2_t3_clase3")
+tras_ind3 <- as_tibble(tras_ind3)
+
+
+d1_wide <- cbind(d1_wide, tras_ind1, tras_ind2, tras_ind3)
+save(d1_wide, file = "/home/rober/Documents/doctorado-UC/sem/sem_trabajo/data/d1_wide.RData")
+
+
+
+
+
+# to long
+d1_long<-long_panel(d1_wide, prefix = "_", begin = 1, end = 3, label_location = "end")
+
+# wb 
+m1 <- wbm(c02 ~ as.factor(e) |mujer+edad+nivel_educ, data = d1_long, family = binomial)
+summary(m1)
+
+library(plm)
+m2 <- plm(c02 ~ e, 
+                data = d1_long, 
+                model = "within")  ## modelo de regresión de efectos fijos
+stargazer(m2, 
+          type = "text",
+          title = "Modelo de efectos fijos")
 
 
