@@ -4,7 +4,6 @@ This repository contains the replication materials for the manuscript:
 
 **“Multiple membership configurations and trust formation: Structural precarity in highly unequal societies”**  
 Roberto Cantillan, Gustavo Ahumada, Vicente Espinoza  
-Target journal: *Social Science Research* (SSR)
 
 ## Summary of the contribution
 
