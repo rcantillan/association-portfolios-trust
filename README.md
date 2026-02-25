@@ -1,4 +1,4 @@
-# Replication Package — Multiple Membership Configurations and Trust Formation (ELSOC, Chile)
+# Replication Package — Multiple Membership Configurations and Trust Formation 
 
 This repository contains the replication materials for the manuscript:
 
