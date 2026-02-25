@@ -1,91 +1,72 @@
-# Replication Package — Multiple Membership Configurations and Trust Formation 
+# Replication Package — Multiple Membership Configurations and Trust Formation (ELSOC, Chile)
 
 This repository contains the replication materials for the manuscript:
 
 **“Multiple membership configurations and trust formation: Structural precarity in highly unequal societies”**  
-Roberto Cantillan, Gustavo Ahumada, Vicente Espinoza
+Roberto Cantillan, Gustavo Ahumada, Vicente Espinoza  
+Target journal: *Social Science Research* (SSR)
 
-## Overview
+## Summary of the contribution
 
-The paper examines whether the **configuration** of voluntary association memberships (portfolio positions) is associated with:
-1) **generalized trust** and **neighborhood trust**, and
-2) the **temporal stability** of cross-domain “bridging” portfolios (structural precarity).
+The paper argues that the relationship between voluntary associations and trust is not well captured by additive participation measures. What matters is the **configuration of membership portfolios across organizational domains** and their **durability over time**.
 
 Using three waves of ELSOC (2016, 2018, 2022; balanced panel), we:
-- estimate a **latent Markov model** to classify respondents into three portfolio positions:
-  - α = isolation
-  - β = clustering (within-domain)
-  - γ = bridging (cross-domain)
-- analyze **transitions** across waves,
-- estimate panel models (baseline RE probit) and report **Average Marginal Effects (AMEs)** for trust outcomes.
+1) estimate a **latent Markov model** to classify respondents into three portfolio positions  
+   - **α (isolation)**, **β (clustering)**, **γ (bridging)**  
+2) analyze **position transitions** to test structural precarity (lower stability of γ)  
+3) estimate panel models for **generalized trust** and **neighborhood trust**, reporting **Average Marginal Effects (AMEs)**  
+4) report the key inferential contrast for SSR: **γ − β** on generalized trust (Wald / diff-in-AME)
+
+---
 
 ## Repository structure
 
 - `code/`  
-  Analysis scripts (R / Stata).
+  Main analysis scripts (R). Includes a single entry point `run_all.R`.
 - `data/`  
-  Input data objects used for replication (see Data availability).
+  Input data objects required to run the pipeline (see “Data availability”).
 - `output/`  
-  Generated tables/figures used in the manuscript.
-- `main.tex`, `preamble.tex`, `references.bib`  
-  LaTeX manuscript source.
+  All generated tables and figures used in the manuscript and Supplementary.
+- `manuscript/` (optional if present)  
+  LaTeX sources (`main.tex`, `preamble.tex`, references).
 
-## Software requirements
+> All R scripts use **relative paths** via the `{here}` package. Run scripts from the repository root.
 
-- **R** (tested on R >= 4.1)
-- Recommended: **RStudio**
-- Key R packages: `LMest`, `tidyverse`, `panelr`, `survey`, `marginaleffects` (or equivalent AME tools)
-- Optional: **Stata** (if using `code/estimation.do`)
+---
 
-> Reproducibility note: scripts are being standardized to run with **relative paths** from the project root
-(using the `here` package). If you encounter hard-coded paths, see “Known issues” below.
+## Requirements
 
-## Data availability
+### R environment
+- **R >= 4.1** recommended  
+- Key packages used (installed automatically if missing by `code/00_setup.R`):
+  - `data.table`, `tidyverse`, `here`, `LMest`, `marginaleffects`, `lme4`, `broom`, `ggplot2`
 
-This replication package uses the **Chilean Longitudinal Social Survey (ELSOC)** data.
-ELSOC is administered by COES and may have redistribution constraints depending on the data agreement.
+### Optional: Stata
+A Stata do-file is included as an optional cross-check of the RE probit + margins results:
+- `code/estimation.do`
 
-- If the data files are included in `data/`, replication should run out-of-the-box.
-- If they are not included in your copy of the repository, users must obtain ELSOC from the official source
-and place the files in `data/` following the file names indicated in the scripts.
+---
 
-## Reproducing the results
+## Data availability (ELSOC)
 
-Run scripts in the following order:
+This project uses **ELSOC (Chilean Longitudinal Social Survey)** data administered by COES. Redistribution may be restricted depending on the usage agreement.
 
-### 1) Latent Markov model (portfolio positions α/β/γ)
-- `code/002_long_latent_class.R`
+- If the required data files are included in `data/`, replication runs out-of-the-box.
+- If not included, users must obtain ELSOC from the official source and place the required objects in `data/`.
 
-Outputs (examples):
-- latent position profiles
-- transition matrix / transition plot(s)
-- tables/figures saved to `output/`
+### Expected input files
+The pipeline expects at minimum one of the following (depending on your setup):
 
-### 2) Additional estimation / robustness (if applicable)
-- `code/estimation.do` (Stata; optional)
-- `code/01_efa_cfa.R` (if used for measurement checks)
-- `code/descriptive_stats.Rmd` (descriptive tables)
+- `data/ELSOC_Long.RData` containing an object named `ELSOC_Long`
 
-### 3) Manuscript tables and figures
-The main tables/figures are stored in `output/` and are referenced in the LaTeX manuscript:
-- `output/plot_transition.png`
-- `output/emd_plot.png`
-- `output/m3_fit_table.tex`, etc.
+The object is expected to include (at least) the following columns:
+`id`, `ola`, the 8 membership domains (`nhg`, `religious`, `political`, `union`, `professional`, `charity`, `sport`, `student`), trust outcomes (`trust`, `trust_nh`), and covariates (`edad`, `woman`, `education`, `employment`).
 
-## Expected outputs
+---
 
-After running the scripts, the repository should contain in `output/`:
-- Model fit table for the latent Markov solution (BIC/AIC/logLik)
-- Position profiles (α/β/γ)
-- Transition probabilities (and plot)
-- Trust models with AMEs for generalized and neighborhood trust
-- Supplementary tables (e.g., multinomial predictors of position membership)
+## How to reproduce all results (recommended)
 
-## Citation
+From the repository root, run:
 
-If you use these materials, please cite the manuscript and this repository.  
-A `CITATION.cff` file will be provided upon journal submission.
-
-## Contact
-
-Roberto Cantillan — roberto.cantillan@...
+```r
+source("code/run_all.R")
