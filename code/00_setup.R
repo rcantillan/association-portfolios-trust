@@ -1,59 +1,90 @@
 # ==============================================================================
-# 00_setup.R — Replication package setup
+# 00_setup.R — Global setup (packages, paths, helpers)
 # ------------------------------------------------------------------------------
-# - Sets project root via {here}
-# - Loads/installs required packages
-# - Defines common paths and small helpers
+# All scripts assume they are run from repository root.
 # ==============================================================================
 
-rm(list = ls())
-
-# ---- Packages ----
-req_pkgs <- c(
-  "here", "data.table", "tidyverse", "LMest",
-  "lme4", "marginaleffects", "broom", "broom.mixed",
-  "nnet", "patchwork"
-)
-
-installed <- rownames(installed.packages())
-to_install <- setdiff(req_pkgs, installed)
-if (length(to_install) > 0) {
-  install.packages(to_install, repos = "https://cloud.r-project.org")
-}
-
-invisible(lapply(req_pkgs, library, character.only = TRUE))
+suppressPackageStartupMessages({
+  library(here)
+  library(tidyverse)
+  library(data.table)
+})
 
 # ---- Paths ----
-ROOT   <- here::here()
-DATA   <- here::here("data")
-CODE   <- here::here("code")
-OUT    <- here::here("output")
+DIR_DATA <- here::here("data")
+DIR_OUT  <- here::here("output")
+if (!dir.exists(DIR_OUT)) dir.create(DIR_OUT, recursive = TRUE)
 
-dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
-
-message("Project root: ", ROOT)
-message("Data dir:      ", DATA)
-message("Output dir:    ", OUT)
-
-# ---- Helpers ----
-# Safer ggsave wrapper
-ggsave_safe <- function(filename, plot, width = 8, height = 5, dpi = 300) {
-  ggplot2::ggsave(filename = here::here("output", filename),
-                  plot = plot, width = width, height = height, dpi = dpi)
+# ---- Required file check ----
+stop_if_missing <- function(paths) {
+  miss <- paths[!file.exists(paths)]
+  if (length(miss) > 0) {
+    stop("Missing required files:\n- ", paste(miss, collapse = "\n- "))
+  }
 }
 
-# Convert to 0/1 robustly
+# ---- Safe ggsave into output/ ----
+ggsave_safe <- function(filename, plot, width = 7, height = 5, dpi = 300) {
+  ggplot2::ggsave(
+    filename = here::here("output", filename),
+    plot = plot,
+    width = width,
+    height = height,
+    dpi = dpi
+  )
+}
+
+# ---- Missing codes common in ELSOC ----
+to_na <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  x <- dplyr::na_if(x, -888)
+  x <- dplyr::na_if(x, -999)
+  x <- dplyr::na_if(x, 777777)
+  x <- dplyr::na_if(x, 999999)
+  x
+}
+
+# ---- Robust 0/1 conversion ----
 to01 <- function(x) {
   if (is.logical(x)) return(as.integer(x))
-  if (is.numeric(x)) return(as.integer(x > 0 & !is.na(x)))
-  x2 <- tolower(trimws(as.character(x)))
-  as.integer(x2 %in% c("1","yes","y","true","t","si","sí"))
+  if (is.character(x)) {
+    x <- trimws(tolower(x))
+    return(dplyr::case_when(
+      x %in% c("si","sí","yes","y","1","true") ~ 1L,
+      x %in% c("no","0","false") ~ 0L,
+      TRUE ~ NA_integer_
+    ))
+  }
+  x <- to_na(x)
+  dplyr::case_when(
+    is.na(x) ~ NA_integer_,
+    x %in% c(0, 1) ~ as.integer(x),
+    TRUE ~ as.integer(x)
+  )
 }
 
-# Simple check
-stop_if_missing <- function(paths) {
-  missing <- paths[!file.exists(paths)]
-  if (length(missing) > 0) {
-    stop("Missing required file(s):\n- ", paste(missing, collapse = "\n- "))
-  }
+# ---- Global knobs ----
+# Choose neighborhood trust item here and it propagates to all scripts.
+TRUST_NH_VAR <- "c03"   # <-- change if needed (e.g., "c04")
+
+# Membership items in the zip-based ELSOC longitudinal file:
+MEMBER_ITEMS <- paste0("c12_0", 1:8)
+
+# Analysis waves used in original workflow:
+WAVES_RAW <- c(1, 3, 6)  # will be recoded to 1,2,3
+
+
+theme_ssr_big <- function(base_size = 16, base_family = "sans") {
+  ggplot2::theme_minimal(base_size = base_size, base_family = base_family) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_blank(),
+      axis.title = ggplot2::element_text(face = "bold"),
+      plot.title = ggplot2::element_text(face = "bold", size = base_size + 3),
+      plot.subtitle = ggplot2::element_text(color = "grey30", size = base_size),
+      axis.text = ggplot2::element_text(size = base_size),
+      legend.title = ggplot2::element_blank(),
+      legend.text = ggplot2::element_text(size = base_size),
+      legend.position = "top"
+    )
 }

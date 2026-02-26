@@ -1,68 +1,56 @@
 # ==============================================================================
-# 04_precarity_transitions.R — "Structural precarity patterned by resources"
+# 04_precarity_transitions.R — Structural precarity: resources -> exits from γ
 # ------------------------------------------------------------------------------
-# Goal:
-#   Show that exits from γ are patterned by resources (education/employment).
-#
-# Inputs:
+# Input:
 #   data/dt_states.rds
-# Outputs (output/):
-#   - exit_gamma_models.txt
-#   - exit_gamma_predicted.csv
-#
-# Design:
-#   Create transitions between consecutive waves (t -> t+1).
-#   Define exit_gamma = 1 if position_t == gamma and position_t1 != gamma.
-#   Estimate logistic regression (or multinomial if you prefer) with resources.
+# Outputs:
+#   output/exit_gamma_logit_summary.txt
+#   output/exit_gamma_predicted.csv
 # ==============================================================================
 
 source(here::here("code", "00_setup.R"))
 
 stop_if_missing(c(here::here("data", "dt_states.rds")))
-dt <- readRDS(here::here("data", "dt_states.rds")) |> data.table::as.data.table()
+dt <- readRDS(here::here("data", "dt_states.rds")) |> as_tibble()
 
-dt[, position := factor(position, levels = c("alpha","beta","gamma"))]
-data.table::setorder(dt, id, ola)
+dt <- dt %>%
+  arrange(id, ola) %>%
+  mutate(position = factor(position, levels = c("alpha","beta","gamma")))
 
-# Build transitions (t -> t+1) within id
-dt[, position_next := data.table::shift(position, type = "lead"), by = id]
-dt[, ola_next := data.table::shift(ola, type = "lead"), by = id]
+# Build t -> t+1 transitions (balanced panel already)
+trans <- dt %>%
+  group_by(id) %>%
+  mutate(
+    position_next = lead(position),
+    ola_next = lead(ola)
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(position_next))
 
-trans <- dt[!is.na(position_next)]
+# Risk set: those in γ at time t
+risk_gamma <- trans %>%
+  filter(position == "gamma") %>%
+  mutate(exit_gamma = as.integer(position_next != "gamma"))
 
-# Exit from gamma
-trans[, exit_gamma := as.integer(position == "gamma" & position_next != "gamma")]
+# Minimal resource predictors (education/employment) + controls
+# (Adjust education recode later if you want categories)
+m_exit <- glm(exit_gamma ~ education + employment + edad + woman + factor(ola),
+              data = risk_gamma, family = binomial(), na.action = na.omit)
 
-# Restrict to risk set: those in gamma at t
-risk <- trans[position == "gamma"]
+# Save model summary
+out_txt <- capture.output(summary(m_exit))
+writeLines(out_txt, con = here::here("output", "exit_gamma_logit_summary.txt"))
 
-# Covariates: education + employment (+ age/gender as baseline)
-risk[, woman := as.integer(to01(woman))]
-if (!is.numeric(risk$education)) risk[, education := factor(education)]
-if (!is.numeric(risk$employment)) risk[, employment := factor(employment)]
-
-m_exit <- glm(
-  exit_gamma ~ education + employment + edad + woman + ola,
-  data = risk,
-  family = binomial(link = "logit")
-)
-
-# Predicted probabilities by education x employment (for a clean SSR figure/table)
-# Build grid (if factors, keep all levels)
+# Predicted exit probabilities by education/employment (simple grid)
 grid <- expand.grid(
-  education = if (is.factor(risk$education)) levels(risk$education) else quantile(risk$education, probs = c(.25,.5,.75), na.rm = TRUE),
-  employment = if (is.factor(risk$employment)) levels(risk$employment) else quantile(risk$employment, probs = c(.25,.5,.75), na.rm = TRUE),
-  edad = median(risk$edad, na.rm = TRUE),
-  woman = 0,
-  ola = levels(factor(risk$ola))[1]
+  education  = sort(unique(risk_gamma$education[!is.na(risk_gamma$education)])),
+  employment = sort(unique(risk_gamma$employment[!is.na(risk_gamma$employment)])),
+  edad = median(risk_gamma$edad, na.rm = TRUE),
+  woman = 1,
+  ola = unique(risk_gamma$ola)[1]
 )
 
-pred <- predict(m_exit, newdata = grid, type = "response")
-out <- cbind(grid, pred_exit_gamma = pred)
+grid$pred_exit <- predict(m_exit, newdata = grid, type = "response")
+readr::write_csv(as_tibble(grid), here::here("output", "exit_gamma_predicted.csv"))
 
-readr::write_csv(as.data.frame(out), here::here("output", "exit_gamma_predicted.csv"))
-
-sink(here::here("output", "exit_gamma_models.txt"))
-cat("Logit model: exit from gamma (risk set: gamma at t)\n")
-print(summary(m_exit))
-sink()
+print(m_exit)
