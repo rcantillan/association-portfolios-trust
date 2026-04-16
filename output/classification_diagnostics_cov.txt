@@ -1,0 +1,36 @@
+=== Covariate LMM diagnostics (K=3) ===
+Balanced panel: ids=1297 | waves=3 | items=8
+Normalized entropy (lower=better) = 0.2641
+Strict threshold p_max >= 0.6
+MAP_GAMMA_BY = entropy
+
+State mapping (canonical STATE_MAP):
+  α (Isolate)  = State 1
+  β (Closed)   = State 3
+  γ (Bridging) = State 2 [REFERENCIA ib2]
+
+Assignment quality (by assigned class):
+   position n_assigned    avg_pp pct_total
+     <char>      <int>     <num>     <num>
+1:    alpha       2160 0.8944931  55.51272
+2:     beta       1334 0.8758226  34.28425
+3:    gamma        397 0.8677279  10.20303
+
+Quality (global):
+   mean_p_max share_strict     n
+        <num>        <num> <int>
+1:  0.8853612    0.9270111  3891
+
+Quality by wave:
+     ola mean_p_max share_strict     n
+   <int>      <num>        <num> <int>
+1:     1  0.8813862    0.9182729  1297
+2:     2  0.8946587    0.9375482  1297
+3:     3  0.8800386    0.9252120  1297
+
+Average transition matrix (alpha/beta/gamma):
+       state
+subject alpha  beta gamma
+  alpha 0.298 0.683 0.019
+  beta  0.605 0.245 0.150
+  gamma 0.367 0.560 0.073

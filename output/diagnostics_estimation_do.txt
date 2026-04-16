@@ -1,0 +1,5 @@
+=== diagnostics (replicate_estimation_do_UPDATED.R) ===
+Rows after merge: 9250
+Rows after filters+balance: 3891
+Unique ids after balance: 1297
+Waves present: 1, 3, 6

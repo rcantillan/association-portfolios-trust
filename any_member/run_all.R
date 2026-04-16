@@ -1,0 +1,6 @@
+# any_member/run_all.R — corre el pipeline completo (any_member)
+cat("=== PIPELINE: any_member (c12 >= 2) ===\n\n")
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "01_prepare.R"))
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "02_lmm.R"))
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "03_trust.R"))
+cat("\n=== PIPELINE COMPLETADO ===\n")

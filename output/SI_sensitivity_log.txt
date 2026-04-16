@@ -1,0 +1,48 @@
+=== 03a_trust_sensitivity.R | 2026-04-09 23:48:07.826902 ===
+nAGQ = 12
+Controles disponibles: swb, employed, couple
+N base: 3891 obs
+
+--- S1: CRE / Mundlak probit ---
+  Fitting CRE (pooled probit + vcovCL) S1_trust_ref_gamma | N=3891
+  Wald χ²(4) for mean terms = 19.35 (df=4) p=0.001
+  Fitting CRE (pooled probit + vcovCL) S1_nh_ref_gamma | N=3891
+  Wald χ²(4) for mean terms = 223.39 (df=4) p=0
+Saved: SI_S1_CRE_mundlak.csv
+
+--- S2: Oster (2019) delta ---
+  trust | β vs γ | beta_r=-0.099 beta_f=-0.092 | delta=19.733
+  trust | α vs γ | beta_r=-0.067 beta_f=-0.064 | delta=29.055
+  trust_nh | β vs γ | beta_r=-0.06 beta_f=-0.046 | delta=1.927
+  trust_nh | α vs γ | beta_r=-0.109 beta_f=-0.098 | delta=4.833
+Saved: SI_S2_oster_delta.csv
+
+--- S3: Cross-lagged specification ---
+  Cross-lagged sample: 2594 obs | 1297 ids
+  Fitting cross-lag S3_trust_ref_gamma | N=2594
+  Fitting cross-lag S3_nh_ref_gamma | N=2594
+Saved: SI_S3_crosslagged.csv
+
+--- S4: Entropy-weighted regression ---
+  Fitting weighted pooled probit S4_trust_ref_gamma | N=3891 | mean(p_max)=0.885
+  Fitting weighted pooled probit S4_nh_ref_gamma | N=3891 | mean(p_max)=0.885
+Saved: SI_S4_entropy_weighted.csv
+
+--- S5: Soft assignment ---
+  Fitting soft S5_trust_soft | N=3891
+  Fitting soft S5_nh_soft | N=3891
+Saved: SI_S5_soft_assignment.csv
+
+--- Comparison table: all sensitivity specs ---
+Saved: SI_sensitivity_comparison.csv
+Saved: SI_sensitivity_tables.txt
+
+[03a_trust_sensitivity.R] DONE.
+Outputs:
+  SI_S1_CRE_mundlak.csv        — CRE/Mundlak AMEs + Wald test of mean terms
+  SI_S2_oster_delta.csv        — Oster delta bounds
+  SI_S3_crosslagged.csv        — Cross-lagged AMEs (clase_{t-1} -> trust_t)
+  SI_S4_entropy_weighted.csv   — Entropy-weighted AMEs
+  SI_S5_soft_assignment.csv    — Soft (posterior probability) AMEs
+  SI_sensitivity_comparison.csv — All specs side by side
+  SI_sensitivity_tables.txt    — LaTeX tables ready for SI

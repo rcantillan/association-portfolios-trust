@@ -1,0 +1,24 @@
+% ============================================================
+% SI Table A5 — Cluster bootstrap validation of AMEs
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Bootstrap validation of AMEs for exit from $\gamma$ (cluster resample)}
+\label{table:SI_A5_bootstrap}
+\small
+\begin{tabular}{lccccc}
+\hline\hline
+  & & \multicolumn{2}{c}{SE} & \multicolumn{2}{c}{95\% CI} \\
+  \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+  Predictor & AME & Cluster-robust & Bootstrap & Cluster-robust & Bootstrap \\
+\hline
+  High education (ref: low)      & -0.220 & 0.065 & 0.065 & [-0.348,\;-0.093] & [-0.346,\;-0.087] \\
+  Employed (ref: other)          & -0.149 & 0.067 & 0.068 & [-0.281,\;-0.018] & [-0.284,\;-0.014] \\
+\hline\hline
+  \multicolumn{6}{p{0.92\textwidth}}{\footnotesize \textit{Notes.}
+  AMEs from probit model of P(exit from $\gamma$). $n = 273$ person-wave observations,
+  $n_{\text{id}} = 196$ unique respondents. Bootstrap: $B = 999$ cluster resamples
+  (sample ids with replacement; cluster-robust SE uses \texttt{vcovCL}). 
+  Bootstrap CI: percentile method [2.5\%, 97.5\%].} \\
+\end{tabular}
+\end{table}

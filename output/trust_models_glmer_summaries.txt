@@ -1,0 +1,81 @@
+=== Model: trust (generalized) ===
+Generalized linear mixed model fit by maximum likelihood (Adaptive Gauss-Hermite
+  Quadrature, nAGQ = 12) [glmerMod]
+ Family: binomial  ( probit )
+Formula: trust ~ position + edad + woman + education + employed + ola +      (1 | id)
+   Data: ms$data
+Control: glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e+05))
+
+     AIC      BIC   logLik deviance df.resid 
+  2006.5   2113.1   -986.3   1972.5     3874 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.2366 -0.1990 -0.1390 -0.1051  4.5451 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id     (Intercept) 0.6097   0.7809  
+Number of obs: 3891, groups:  id, 1297
+
+Fixed effects:
+              Estimate Std. Error z value Pr(>|z|)    
+(Intercept)   -2.69783    0.27734  -9.727  < 2e-16 ***
+positionbeta  -0.06738    0.10636  -0.633  0.52642    
+positiongamma  0.03196    0.12650   0.253  0.80054    
+edad25_34      0.51075    0.23573   2.167  0.03026 *  
+edad35_44      0.62135    0.24433   2.543  0.01099 *  
+edad45_54      0.63013    0.24294   2.594  0.00949 ** 
+edad55_64      0.62616    0.24517   2.554  0.01065 *  
+edad65         0.60449    0.25277   2.391  0.01678 *  
+woman1        -0.19412    0.09548  -2.033  0.04205 *  
+education2     0.19973    0.16161   1.236  0.21651    
+education3     0.19136    0.13708   1.396  0.16272    
+education4     0.49119    0.15313   3.208  0.00134 ** 
+education5     1.09964    0.15360   7.159 8.13e-13 ***
+employed1      0.03293    0.09192   0.358  0.72013    
+ola2           0.18416    0.08493   2.168  0.03013 *  
+ola3          -0.12487    0.09172  -1.361  0.17336    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== Model: trust_nh (neighborhood) ===
+Generalized linear mixed model fit by maximum likelihood (Adaptive Gauss-Hermite
+  Quadrature, nAGQ = 12) [glmerMod]
+ Family: binomial  ( probit )
+Formula: trust_nh ~ position + edad + woman + education + employed + ola +      (1 | id)
+   Data: ms$data
+Control: glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e+05))
+
+     AIC      BIC   logLik deviance df.resid 
+  4972.9   5079.4  -2469.5   4938.9     3874 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.7269 -0.5952 -0.3155  0.6332  1.6663 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id     (Intercept) 0.9524   0.9759  
+Number of obs: 3891, groups:  id, 1297
+
+Fixed effects:
+              Estimate Std. Error z value Pr(>|z|)    
+(Intercept)   -0.80216    0.18336  -4.375 1.22e-05 ***
+positionbeta   0.17935    0.07936   2.260  0.02382 *  
+positiongamma  0.18198    0.10460   1.740  0.08191 .  
+edad25_34      0.13650    0.15734   0.868  0.38563    
+edad35_44      0.19186    0.16825   1.140  0.25416    
+edad45_54      0.37904    0.16761   2.261  0.02373 *  
+edad55_64      0.52674    0.17034   3.092  0.00199 ** 
+edad65         0.80891    0.17950   4.506 6.59e-06 ***
+woman1        -0.09786    0.07991  -1.225  0.22069    
+education2     0.13493    0.10862   1.242  0.21413    
+education3     0.27637    0.09528   2.901  0.00373 ** 
+education4     0.47654    0.11372   4.191 2.78e-05 ***
+education5     0.58565    0.12008   4.877 1.08e-06 ***
+employed1      0.13558    0.06606   2.052  0.04012 *  
+ola2           0.08116    0.05754   1.411  0.15836    
+ola3          -0.05655    0.05935  -0.953  0.34072    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

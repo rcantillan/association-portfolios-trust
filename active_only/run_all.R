@@ -1,0 +1,6 @@
+# active_only/run_all.R — corre el pipeline completo (active_only)
+cat("=== PIPELINE: active_only (c12 == 3) ===\n\n")
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "01_prepare.R"))
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "02_lmm.R"))
+source(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "03_trust.R"))
+cat("\n=== PIPELINE COMPLETADO ===\n")

@@ -1,0 +1,25 @@
+% ============================================================
+% SI Table A2 — Persistence by position × wave
+% Paste into Online Appendix
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Portfolio-position persistence by transition period}
+\label{table:SI_A2}
+\small
+\begin{tabular}{llrccl}
+\hline\hline
+  Position & Transition & $n$ & P(stay) & P(exit) & 95\% CI \\
+\hline
+  $\alpha$ (isolation)     & 2016→2018      &  720 & 0.911 & 0.089 & [0.890,\;0.932] \\
+  $\alpha$ (isolation)     & 2018→2022      &  717 & 0.933 & 0.067 & [0.915,\;0.951] \\
+  $\beta$ (clustering)     & 2016→2018      &  448 & 0.886 & 0.114 & [0.857,\;0.916] \\
+  $\beta$ (clustering)     & 2018→2022      &  436 & 0.929 & 0.071 & [0.905,\;0.953] \\
+  $\gamma$ (bridging)      & 2016→2018      &  129 & 0.597 & 0.403 & [0.512,\;0.682] \\
+  $\gamma$ (bridging)      & 2018→2022      &  144 & 0.576 & 0.424 & [0.496,\;0.657] \\
+\hline\hline
+  \multicolumn{6}{p{0.88\textwidth}}{\footnotesize \textit{Notes.}
+  Unconditional persistence and exit rates per position and transition period.
+  95\% CI based on normal approximation. $n$: person-wave observations per cell.} \\
+\end{tabular}
+\end{table}

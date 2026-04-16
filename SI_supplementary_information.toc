@@ -1,0 +1,19 @@
+\contentsline {section}{\numberline {S1}Attrition Analysis and Sample Comparisons}{2}{section.1}%
+\contentsline {section}{\numberline {S2}Latent Markov Model: Diagnostics and Robustness}{3}{section.2}%
+\contentsline {subsection}{\numberline {S2.1}Model Fit Statistics}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {S2.2}Classification Quality}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {S2.3}Latent Portfolio Profiles}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {S3}H3: Portfolio Persistence and Structural Precarity}{5}{section.3}%
+\contentsline {subsection}{\numberline {S3.1}Persistence by position and transition period}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {S3.2}SES predictors of exit from $\gamma $: four specifications}{6}{subsection.3.2}%
+\contentsline {subsection}{\numberline {S3.3}Specificity test: exit models by starting position}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {S3.4}Cluster bootstrap validation}{7}{subsection.3.4}%
+\contentsline {section}{\numberline {S4}Trust Models: Main Specification}{8}{section.4}%
+\contentsline {subsection}{\numberline {S4.1}Reverse causation test}{9}{subsection.4.1}%
+\contentsline {section}{\numberline {S5}Sensitivity Analyses for Trust Models}{9}{section.5}%
+\contentsline {subsection}{\numberline {S5.1}S1: Correlated Random Effects / Mundlak Probit}{10}{subsection.5.1}%
+\contentsline {subsection}{\numberline {S5.2}S2: Oster (2019) $\delta $ Bounds}{11}{subsection.5.2}%
+\contentsline {subsection}{\numberline {S5.3}S3: Cross-Lagged Specification}{11}{subsection.5.3}%
+\contentsline {subsection}{\numberline {S5.4}S4: Entropy-Weighted Pooled Probit}{12}{subsection.5.4}%
+\contentsline {subsection}{\numberline {S5.5}S5: Soft Assignment with Posterior Probabilities}{12}{subsection.5.5}%
+\contentsline {section}{\numberline {S6}Sensitivity: Active-Only Membership Coding}{13}{section.6}%

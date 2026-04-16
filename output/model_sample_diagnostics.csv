@@ -1,0 +1,3 @@
+outcome,n_rows,n_ids,pos_levels,ola_levels,woman_levels,edu_levels,employed_levels,dropped_terms,controls_used
+trust,3891,1297,3,3,2,5,2,,"edad,woman,education,employed"
+trust_nh,3891,1297,3,3,2,5,2,,"edad,woman,education,employed"

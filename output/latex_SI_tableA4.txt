@@ -1,0 +1,35 @@
+% ============================================================
+% SI Table A4 — Specificity test: exit models by starting position
+% Paste into Online Appendix
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Socioeconomic predictors of position exit by starting position (specificity test)}
+\label{table:SI_A4}
+\small
+\begin{tabular}{lccr}
+\hline\hline
+  Predictor & AME & (SE) & $p$-value \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\alpha$ (isolation) --- exit rate = 7.8\%, $n = 1437$}} \\
+\hline
+  \quad High education         & +0.029$\dagger$ & (0.016) & 0.065 \\
+  \quad Employed               & +0.013 & (0.015) & 0.364 \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\beta$ (clustering) --- exit rate = 9.3\%, $n = 884$}} \\
+\hline
+  \quad High education         & +0.082* & (0.035) & 0.019 \\
+  \quad Employed               & -0.008 & (0.020) & 0.682 \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\gamma$ (bridging) --- exit rate = 41.4\%, $n = 273$}} \\
+\hline
+  \quad High education         & -0.220*** & (0.065) & 0.001 \\
+  \quad Employed               & -0.149* & (0.067) & 0.026 \\
+\hline\hline
+  \multicolumn{4}{p{0.75\textwidth}}{\footnotesize \textit{Notes.}
+  AMEs from probit models of P(exit from starting position by $t+1$).
+  Each panel uses respondents starting in the indicated position.
+  Controls: sex, age, wave. Cluster-robust SE (by individual).
+  $\dagger p < .10$; $* p < .05$; $** p < .01$; $*** p < .001$.} \\
+\end{tabular}
+\end{table}

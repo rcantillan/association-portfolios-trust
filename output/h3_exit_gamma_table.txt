@@ -1,0 +1,38 @@
+=== Table A3: Probit AMEs — P(Exit from γ | in γ at t) ===
+Outcome: exit_gamma (1 = transitioned out of bridging position)
+Sample: person-transitions where position = γ at wave t (n = 267 )
+
+MODEL 1 — Education only:
+
+
+|term     | estimate| std.error| p.value|
+|:--------|--------:|---------:|-------:|
+|edu_high |   -0.286|     0.065|       0|
+
+MODEL 2 — Employment only:
+
+
+|term     | estimate| std.error| p.value|
+|:--------|--------:|---------:|-------:|
+|employed |   -0.101|     0.069|   0.145|
+
+MODEL 3 — Full model (preferred):
+
+
+|term     | estimate| std.error| p.value|
+|:--------|--------:|---------:|-------:|
+|edu_high |   -0.277|     0.065|   0.000|
+|employed |   -0.119|     0.068|   0.081|
+
+MODEL 4 — Ordinal education (robustness):
+
+
+|term     | estimate| std.error| p.value|
+|:--------|--------:|---------:|-------:|
+|edu_ord  |   -0.134|     0.023|   0.000|
+|employed |   -0.122|     0.069|   0.079|
+
+Note: Probit AMEs. Cluster-robust SE (by individual).
+Controls: sex (mujer), age (midpoint of band), wave indicator.
+edu_high = técnica or university (vs. básica/media).
+employed = m02 <= 2 (employed or self-employed vs. other).

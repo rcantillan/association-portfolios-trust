@@ -1,0 +1,9 @@
+model,outcome,contrast,estimate,std.error,p.value,sig
+"Model 1 (RE, no controls)",Generalized trust (social_trust),1 - 2,-0.060163609935706346,0.01898007697197507,0.001525283540343086,***
+"Model 1 (RE, no controls)",Generalized trust (social_trust),3 - 2,-0.0353287574346185,0.018584697584652306,0.05730731756385504,*
+"Model 2 (RE, controls)",Generalized trust (social_trust),1 - 2,-0.05107348441143915,0.018499433585247083,0.005765760619970594,***
+"Model 2 (RE, controls)",Generalized trust (social_trust),3 - 2,-0.032490441325359394,0.017694859064926977,0.06633525913375096,*
+"Model 3 (RE, no controls)",Trust in neighbors (trust_nb),1 - 2,-0.052582669729736464,0.03566260444980145,0.14036090367013987,
+"Model 3 (RE, no controls)",Trust in neighbors (trust_nb),3 - 2,-0.10319397198715391,0.034188340260149476,0.0025411605431047194,***
+"Model 4 (RE, controls)",Trust in neighbors (trust_nb),1 - 2,-0.0796932158924101,0.03399132300266474,0.019051770148654525,**
+"Model 4 (RE, controls)",Trust in neighbors (trust_nb),3 - 2,-0.09959272826937944,0.03158330076778225,0.0016141644162211226,***

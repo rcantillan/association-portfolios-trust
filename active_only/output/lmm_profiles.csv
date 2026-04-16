@@ -1,0 +1,10 @@
+domain,state_alpha,state_beta,state_gamma
+nhg,0.132,0.4,0.352
+religious,0.018,0.692,0.179
+political,0.003,0.006,0.089
+union,0.03,0.015,0.325
+professional,0.007,0.015,0.223
+charity,0.021,0.121,0.277
+sport,0.059,0.041,0.263
+student,0.009,0.023,0.089
+other,0.03,0.058,0.088

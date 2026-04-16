@@ -1,0 +1,33 @@
+% ============================================================
+% Table 3 — Portfolio persistence and SES gradient
+% Paste this block into your Overleaf main document
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Portfolio-position persistence and socioeconomic gradient in exits from bridging}
+\label{table:h3_main}
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lrcccc}
+\hline\hline
+  & & \multicolumn{2}{c}{Panel A: Persistence} & \multicolumn{2}{c}{Panel B: Exit from $\gamma$} \\
+  \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+  Position / Predictor & $n$ & P(stay) & P(exit) & AME & SE \\
+\hline
+  \multicolumn{6}{l}{\textit{Unconditional persistence (pooled across transitions)}} \\
+  $\alpha$ (isolation)         &  1437 & 0.922 & 0.078 &       &      \\
+  $\beta$ (clustering)         &   884 & 0.907 & 0.093 &       &      \\
+  $\gamma$ (bridging)          &   273 & 0.586 & 0.414 &       &      \\
+\hline
+  \multicolumn{6}{l}{\textit{SES predictors of exit from $\gamma$ (Model 3, preferred)}} \\
+  High education (ref: low)    &   273 &       &       & -0.220*** & 0.065 \\
+  Employed (ref: other)        &   273 &       &       & -0.149* & 0.067 \\
+\hline\hline
+  \multicolumn{6}{p{0.92\textwidth}}{\footnotesize \textit{Notes.}
+  Panel A: pooled persistence and exit rates across 2016$\to$2018 and 2018$\to$2022 transitions.
+  Panel B: AMEs from a probit model of P(exit from $\gamma$ by $t+1$) among respondents in $\gamma$ ($n = 273$ person-wave observations).
+  Controls: sex, age (band midpoint), wave indicator.
+  Cluster-robust SE (by individual).
+  $\dagger p < .10$; $* p < .05$; $** p < .01$; $*** p < .001$.} \\
+\end{tabular}
+\end{table}

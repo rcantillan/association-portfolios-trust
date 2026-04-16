@@ -1,0 +1,52 @@
+================================================================
+INLINE NUMBERS — §3.2 Structural Precarity
+================================================================
+
+--- Exit rates (pooled) ---
+  P(exit | alpha) = 7.8%   n = 1437
+  P(exit | beta)  = 9.3%   n = 884
+  P(exit | gamma) = 41.4%   n = 273
+  Ratio gamma/alpha = 5.3x
+
+--- By transition period ---
+  alpha    2016→2018: P(exit) = 8.9%
+  alpha    2018→2022: P(exit) = 6.7%
+  beta     2016→2018: P(exit) = 11.4%
+  beta     2018→2022: P(exit) = 7.1%
+  gamma    2016→2018: P(exit) = 40.3%
+  gamma    2018→2022: P(exit) = 42.4%
+
+
+--- Model 3 AMEs ---
+  edu_high: AME=-0.220  SE=0.065  p=0.0007  ***
+  employed: AME=-0.149  SE=0.067  p=0.0260  *
+  n(gamma) = 273
+
+--- Specificity ---
+  alpha  | edu_high  : AME=+0.029 (p=0.065) +
+  alpha  | employed  : AME=+0.013 (p=0.364) 
+  beta   | edu_high  : AME=+0.082 (p=0.019) *
+  beta   | employed  : AME=-0.008 (p=0.682) 
+  gamma  | edu_high  : AME=-0.220 (p=0.001) ***
+  gamma  | employed  : AME=-0.149 (p=0.026) *
+
+
+================================================================
+PARAGRAPH FOR §3.2 (LaTeX-ready):
+================================================================
+
+Position $\gamma$ is substantially less stable than Positions $\alpha$ and
+$\beta$ (Figure~2). Pooled across wave-transitions, the exit probability from
+$\gamma$ is 41.4\%, compared to 9.3\% for $\beta$ and 7.8\%
+for $\alpha$ --- a 5.3-fold difference consistent across both transition
+periods (Table~A2). Among respondents in $\gamma$ at wave $t$ ($n = 273$
+person-wave observations), exits are negatively associated with socioeconomic
+resources: higher education reduces the probability of exiting $\gamma$ by
+22.0 percentage points (AME\,$=$\,-0.220, SE\,$=$\,0.065, $p < .001$), and
+employment reduces it by 14.9 percentage points (AME\,$=$\,-0.149,
+SE\,$=$\,0.067, $p = 0.03$; Table~A3). Importantly, the education gradient
+reverses across starting positions: among respondents in $\alpha$ and $\beta$,
+higher education is associated with \emph{higher} exit probabilities
+(AMEs\,$=+$0.029 and $+$0.082, respectively), consistent with upward mobility
+toward bridging, whereas among respondents in $\gamma$ it predicts retention
+(Table~A4). Together, these patterns support H3.

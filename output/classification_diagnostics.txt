@@ -1,0 +1,28 @@
+=== Diagnósticos LMM K=3 ===
+Entropía normalizada: 0.2711
+
+Conteo y calidad por posición:
+   position n_assigned    avg_pp pct_total
+     <char>      <int>     <num>     <num>
+1:    alpha       1179 0.3657974  30.84772
+2:     beta       1630 0.2505414  42.64783
+3:    gamma       1013 0.6796821  26.50445
+
+Matriz de transición:
+       state
+state    beta gamma alpha
+  beta  0.593 0.022 0.051
+  gamma 0.098 0.372 0.197
+  alpha 0.022 0.032 0.612
+
+P(member=1|state):
+    state
+item     1     2     3
+   1 0.562 0.643 0.227
+   2 0.744 0.489 0.069
+   3 0.018 0.467 0.034
+   4 0.057 0.425 0.109
+   5 0.135 0.572 0.064
+   6 0.028 0.450 0.086
+   7 0.024 0.312 0.019
+   8 0.020 0.251 0.021

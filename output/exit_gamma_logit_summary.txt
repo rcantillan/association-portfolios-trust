@@ -1,0 +1,24 @@
+
+Call:
+glm(formula = exit_gamma ~ education + employed + edad + woman + 
+    factor(ola), family = binomial(), data = risk_gamma, na.action = na.omit)
+
+Coefficients:
+              Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  -0.178379   0.730591  -0.244 0.807109    
+education     0.225269   0.102798   2.191 0.028425 *  
+employed     -0.253191   0.258423  -0.980 0.327208    
+edad          0.023982   0.009743   2.462 0.013833 *  
+woman        -0.152635   0.283287  -0.539 0.590024    
+factor(ola)2  0.850125   0.256982   3.308 0.000939 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 473.90  on 550  degrees of freedom
+Residual deviance: 451.99  on 545  degrees of freedom
+AIC: 463.99
+
+Number of Fisher Scoring iterations: 5
+

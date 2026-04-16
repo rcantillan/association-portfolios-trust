@@ -1,0 +1,19 @@
+=== H3 Summary ===
+
+--- Persistence (pooled) ---
+# A tibble: 3 × 3
+  position p_stay     n
+  <chr>     <dbl> <int>
+1 alpha     0.922  1437
+2 beta      0.907   884
+3 gamma     0.586   273
+
+Exit rate from gamma: 0.414
+n(gamma-transitions): 273 
+
+--- Model 3 AMEs ---
+# A tibble: 2 × 4
+  term     estimate std.error p.value
+  <chr>       <dbl>     <dbl>   <dbl>
+1 edu_high   -0.220    0.0653  0.0007
+2 employed   -0.149    0.0671  0.026 

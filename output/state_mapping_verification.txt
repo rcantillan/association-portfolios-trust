@@ -1,0 +1,51 @@
+=== STATE MAPPING VERIFICATION (002_long_latent_class.R) ===
+Dataset: ELSOC Long 2016-2022 | K=3 | MAP_GAMMA_BY=entropy
+
+--- Mapping (STATE_MAP canonical) ---
+  α (Isolate/Apathetic)  -> LMM State 1  | clase=3 | ref=ib3
+  β (Closed/Clustering)  -> LMM State 3  | clase=1 | ref=ib1
+  γ (Bridging/Broker)    -> LMM State 2  | clase=2 | ref=ib2 [REFERENCIA]
+
+--- Descriptivos por estado ---
+  exp_count  (colSums prob1): 0.587 | 3.378 | 1.523
+  entropy    (domain divers): 0.879 | 0.981 | 0.609
+
+--- Probabilidades de membresía (P(Y=1|state)) ---
+    Items x States:
+        state
+item     State_1 State_2 State_3
+  c12_01   0.182   0.610   0.602
+  c12_02   0.083   0.484   0.665
+  c12_03   0.017   0.276   0.025
+  c12_04   0.089   0.389   0.029
+  c12_05   0.029   0.450   0.010
+  c12_06   0.053   0.538   0.132
+  c12_07   0.113   0.396   0.046
+  c12_08   0.021   0.236   0.015
+
+--- Dominios activos (prob1 >= 0.30) ---
+  α State_1: 0 dominios activos (esperado: <= 2)
+  β State_3: 2 dominios activos (esperado: 1-3, concentrado)
+  γ State_2: 6 dominios activos (esperado: >= 4, diverso)
+
+--- SUSTANTIVE CHECK (responder Sí/No antes de correr 003) ---
+  1. ¿El estado alpha tiene probabilidades bajas en la mayoría de dominios?
+  2. ¿El estado beta concentra membresías en 1-3 dominios (e.g., religioso, vecinal)?
+  3. ¿El estado gamma tiene probabilidades >= 0.30 en >= 4 dominios distintos?
+  4. ¿El orden alpha < beta < gamma tiene sentido sustantivo como Isolate/Closed/Bridging?
+
+  Si NO: cambiar MAP_GAMMA_BY, revisar K_BASELINE, o ajustar alpha_state manualmente.
+
+--- Average transition matrix (alpha/beta/gamma) ---
+       state
+subject alpha  beta gamma
+  alpha 0.298 0.683 0.019
+  beta  0.605 0.245 0.150
+  gamma 0.367 0.560 0.073
+
+--- Classification quality ---
+   mean_p_max share_strict     n
+        <num>        <num> <int>
+1:  0.8853612    0.9270111  3891
+  Entropy norm (lower=better): 0.2641
+  Strict threshold (p_max >= 0.6): 0.927 obs clasificados

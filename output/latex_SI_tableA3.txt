@@ -1,0 +1,32 @@
+% ============================================================
+% SI Table A3 — All 4 exit-from-γ models
+% Paste into Online Appendix
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Socioeconomic predictors of exit from $\gamma$: probit AMEs (four specifications)}
+\label{table:SI_A3}
+\small
+\begin{tabular}{lcccc}
+\hline\hline
+  & \multicolumn{4}{c}{Outcome: P(exit from $\gamma$ at $t+1$)} \\
+  \cmidrule(lr){2-5}
+  & M1: Edu only & M2: Emp only & M3: Full & M4: Edu ordinal \\
+\hline
+  High education (ref: low)      & -0.229*** &  & -0.220** &  \\
+                                 & (0.065) &  & (0.065) &  \\
+  Education (ordinal, 1--4)      &  &  &  & -0.113*** \\
+                                 &  &  &  & (0.025) \\
+  Employed (ref: other)          &  & -0.130$\dagger$ & -0.149* & -0.148* \\
+                                 &  & (0.067) & (0.067) & (0.069) \\
+\hline
+  $n$ & \multicolumn{4}{c}{273} \\
+\hline\hline
+  \multicolumn{5}{p{0.88\textwidth}}{\footnotesize \textit{Notes.}
+  AMEs from probit models. Sample: person-wave observations in $\gamma$ at $t$.
+  M1--M3 use binary high education (t{\'e}cnica or university vs.\ lower);
+  M4 uses ordinal education (1--4). All models include sex, age, wave indicator.
+  Cluster-robust SE (by individual) in parentheses.
+  $\dagger p < .10$; $* p < .05$; $** p < .01$; $*** p < .001$.} \\
+\end{tabular}
+\end{table}

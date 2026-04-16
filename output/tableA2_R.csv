@@ -1,0 +1,5 @@
+model,predictor,term,contrast,estimate,std.error,p.value,sig
+Model 1 (xtreg-like): clase ~ social_trust + i.ola,Generalized trust (social_trust),social_trust_f,1 - 0,0.008240341633041215,0.02759138790445559,0.7652023088036397,
+Model 2 (xtreg-like): + controls,Generalized trust (social_trust),social_trust_f,1 - 0,0.0011112315831458446,0.02725886330223749,0.9674825395907568,
+Model 3 (xtreg-like): clase ~ trust_nb + i.ola,Trust in neighbors (trust_nb),trust_nb_f,1 - 0,-0.021016373362779284,0.017864801018676848,0.23943012078921108,
+Model 4 (xtreg-like): + controls,Trust in neighbors (trust_nb),trust_nb_f,1 - 0,-0.014959356662195058,0.018549790563175354,0.4199872158175185,

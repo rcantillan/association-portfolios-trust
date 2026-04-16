@@ -20,29 +20,46 @@ Using three waves of ELSOC (2016, 2018, 2022; balanced panel), we:
 
 ## Repository structure
 
-- `code/`  
-  Main analysis scripts (R). Includes a single entry point `run_all.R`.
-- `data/`  
-  Input data objects required to run the pipeline (see “Data availability”).
-- `output/`  
-  All generated tables and figures used in the manuscript and Supplementary.
-- `manuscript/` (optional if present)  
-  LaTeX sources (`main.tex`, `preamble.tex`, references).
+- `code/00_setup.R`
+  Shared configuration: `MEMBER_CODE_LOGIC`, `STATE_MAP`, helper functions, package loading.
+- `code/run_all.R`
+  Single entry point — runs the full pipeline (main + SI) in order.
+- `code/main/`
+  Main manuscript analysis:
+  - `01_descriptive_stats.R` — sample description, summary statistics
+  - `02_latent_markov.R` — LMM estimation (K=1..5), profile extraction, state mapping
+  - `03_trust_models.R` — RE probit trust models, AMEs, γ−β contrast
+  - `06_figures_plots.R` — all main manuscript figures
+  - `estimation.do` — Stata cross-check (optional)
+- `code/SI/`
+  Supplementary information analysis:
+  - `03b_precarity_transitions_SES.R` — H3: exit rates, SES predictors, bootstrap
+  - `03_H4_connectivity_best.R` — H4: portfolio connectivity (Jaccard)
+  - `03a_trust_sensitivity.R` — S1–S5: CRE, Oster δ, cross-lagged, entropy-weighted, soft assignment
+  - `03c_active_only_sensitivity.R` — S7: active-only membership sensitivity
+  - `04_SI_tables.R` — all SI LaTeX tables
+  - `07_replicate_stata_models.R` — Stata/R cross-validation
+- `data/`
+  Input data and intermediate objects (see “Data availability”).
+- `output/`
+  All generated tables and figures (main + SI).
 
-> All R scripts use **relative paths** via the `{here}` package. Run scripts from the repository root.
+> All R scripts use **relative paths** via the `{here}` package. Run from the repository root.
+> `MEMBER_CODE_LOGIC = “any_member”` (c12 ≥ 2) is the main analysis specification.
+> Active-only sensitivity (`c12 == 3`) is in `code/SI/03c_active_only_sensitivity.R`.
 
 ---
 
 ## Requirements
 
 ### R environment
-- **R >= 4.1** recommended  
+- **R >= 4.1** recommended
 - Key packages used (installed automatically if missing by `code/00_setup.R`):
   - `data.table`, `tidyverse`, `here`, `LMest`, `marginaleffects`, `lme4`, `broom`, `ggplot2`
 
 ### Optional: Stata
 A Stata do-file is included as an optional cross-check of the RE probit + margins results:
-- `code/estimation.do`
+- `code/main/estimation.do`
 
 ---
 

@@ -1,0 +1,7 @@
+Loaded: /home/rober/Documentos/association-portfolios-trust/data/dt_states_cov.rds
+Using c12_* domains: c12_01, c12_02, c12_03, c12_04, c12_05, c12_06, c12_07, c12_08
+Years present: 2016, 2018, 2022
+Saved: output/H4_connectivity_by_wave_jaccard.csv
+Saved: output/H4_connectivity_by_wave_bootstrap.csv (B=500)
+DONE: H4 figures + bootstrap CI saved in output/
+Log: /home/rober/Documentos/association-portfolios-trust/output/H4_connectivity_log.txt

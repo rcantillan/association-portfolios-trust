@@ -1,0 +1,6 @@
+LRT: homogeneous vs time-varying
+Homog: logLik=-10596.49
+TV:    logLik=-10588.71
+chi2(6)=15.56 p=0.0163
+→ Transiciones time-varying mejoran el ajuste
+
