@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2026.1.11)  30 MAR 2026 11:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2026.1.11)  23 APR 2026 10:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -535,15 +535,15 @@ Package pdftex.def Info: output/figure_h3_SI_bootstrap.pdf  used on input line 3
 [10]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 532.
+(hyperref)                removing `math shift' on input line 534.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\delta' on input line 532.
+(hyperref)                removing `\delta' on input line 534.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 532.
+(hyperref)                removing `math shift' on input line 534.
 
 
 
@@ -564,13 +564,13 @@ Package rerunfilecheck Info: File `SI_supplementary_information.out' has not cha
 Here is how much of TeX's memory you used:
  12775 strings out of 475160
  199164 string characters out of 5765442
- 608644 words of memory out of 5000000
+ 609644 words of memory out of 5000000
  35520 multiletter control sequences out of 15000+600000
  644580 words of font info for 97 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,12n,79p,517b,455s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi12.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/rober/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt12.pfb>
-Output written on SI_supplementary_information.pdf (14 pages, 349188 bytes).
+Output written on SI_supplementary_information.pdf (14 pages, 349224 bytes).
 PDF statistics:
  353 PDF objects out of 1000 (max. 8388607)
  292 compressed objects within 3 object streams

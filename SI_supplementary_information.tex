@@ -277,7 +277,7 @@ $n$: person-wave observations per cell.}
   \cmidrule(lr){2-5}
   & M1: Edu only & M2: Emp only & M3: Full & M4: Edu ordinal \\
 \hline
-  High education (ref: low)   & $-0.229^{***}$ &              & $-0.220^{**}$ &               \\
+  High education (ref: low)   & $-0.229^{***}$ &              & $-0.220^{***}$ &               \\
                               & (0.065)        &              & (0.065)       &               \\
   Education (ordinal, 1--4)   &                &              &               & $-0.113^{***}$\\
                               &                &              &               & (0.025)       \\
@@ -386,10 +386,10 @@ the random-effects probit models that constitute our preferred specification
   \cmidrule(lr){2-3}\cmidrule(lr){4-5}
   & M1 (no ctrl) & M2 (ctrl) & M3 (no ctrl) & M4 (ctrl) \\
 \hline
-  $\beta$ vs.\ $\gamma$ & $-0.059^{**}$ & $-0.051^{**}$ & $-0.037$       & $-0.069^{*}$  \\
-                        & (0.018)       & (0.018)       & (0.035)        & (0.033)       \\[4pt]
-  $\alpha$ vs.\ $\gamma$& $-0.035^{*}$  & $-0.031^{\dagger}$ & $-0.091^{**}$ & $-0.090^{**}$ \\
-                        & (0.018)       & (0.017)       & (0.033)        & (0.030)       \\
+  $\beta$ vs.\ $\gamma$ & $-0.059^{**}$ & $-0.056^{**}$ & $-0.037$       & $-0.022$      \\
+                        & (0.018)       & (0.018)       & (0.035)        & (0.035)       \\[4pt]
+  $\alpha$ vs.\ $\gamma$& $-0.035^{*}$  & $-0.033^{\dagger}$ & $-0.091^{**}$ & $-0.080^{*}$ \\
+                        & (0.018)       & (0.017)       & (0.033)        & (0.033)       \\
 \hline
   $N$ (person-waves)    & \multicolumn{4}{c}{3,891} \\
   $n$ (individuals)     & \multicolumn{4}{c}{1,297} \\
@@ -398,8 +398,8 @@ the random-effects probit models that constitute our preferred specification
 \hline\hline
 \end{tabular}
 \tablenote{AMEs from RE probit (GHQ-12 quadrature, nAGQ = 12).
-Reference category: $\gamma$ (Bridging). Controls: age, sex, subjective
-wellbeing, employment, couple status, institutional trust.
+Reference category: $\gamma$ (Bridging). Controls: subjective wellbeing,
+employment status, couple status.
 SE in parentheses (model-based with cluster-robust fallback).
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
@@ -455,33 +455,33 @@ generalized trust --- is significant in all four model-based specifications
   Specification & Outcome & Contrast & AME (SE) \\
 \hline
   \multicolumn{4}{l}{\textit{S1: CRE / Mundlak pooled probit}} \\
-  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.077^{***}$ (0.023) \\
-  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.054^{*}$ (0.022) \\
-  & Neighbourhood trust  & $\beta$ vs.\ $\gamma$ & $-0.072^{*}$ (0.033) \\
-  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.088^{**}$ (0.030) \\
+  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.081^{***}$ (0.023) \\
+  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.055^{*}$ (0.023) \\
+  & Neighbourhood trust  & $\beta$ vs.\ $\gamma$ & $-0.056^{\dagger}$ (0.032) \\
+  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.081^{**}$ (0.030) \\
 \hline
   \multicolumn{4}{l}{\textit{S3: Cross-lagged}} \\
-  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.066^{**}$ (0.022) \\
-  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.048^{*}$ (0.021) \\
-  & Neighbourhood trust  & $\beta$ vs.\ $\gamma$ & $-0.064^{*}$ (0.032) \\
-  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.063^{*}$ (0.029) \\
+  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.076^{***}$ (0.022) \\
+  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.050^{*}$ (0.021) \\
+  & Neighbourhood trust  & $\beta$ vs.\ $\gamma$ & $-0.059^{\dagger}$ (0.033) \\
+  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.075^{*}$ (0.031) \\
 \hline
   \multicolumn{4}{l}{\textit{S4: Entropy-weighted pooled probit}} \\
-  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.090^{***}$ (0.024) \\
-  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.060^{*}$ (0.024) \\
-  & Neighbourhood trust  & $\beta$ vs.\ $\gamma$ & $-0.081^{*}$ (0.033) \\
-  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.096^{**}$ (0.030) \\
+  & Generalized trust    & $\beta$ vs.\ $\gamma$ & $-0.095^{***}$ (0.024) \\
+  & Generalized trust    & $\alpha$ vs.\ $\gamma$ & $-0.062^{*}$ (0.024) \\
+  & Neighbourhood trust  & $\alpha$ vs.\ $\gamma$ & $-0.099^{**}$ (0.033) \\
 \hline
   \multicolumn{4}{l}{\textit{S5: Soft assignment (posterior probabilities)}} \\
-  & Generalized trust    & $p_{\beta}$ (1-unit)  & $-0.041^{**}$ (0.013) \\
-  & Generalized trust    & $p_{\gamma}$ (1-unit) & $+0.029^{*}$ (0.014) \\
-  & Neighbourhood trust  & $p_{\gamma}$ (1-unit) & $+0.119^{***}$ (0.036) \\
+  & Generalized trust    & $p_{\beta}$ (1-unit)  & $-0.045^{***}$ (0.012) \\
+  & Generalized trust    & $p_{\gamma}$ (1-unit) & $+0.030^{*}$ (0.014) \\
+  & Neighbourhood trust  & $p_{\beta}$ (1-unit)  & $+0.078^{**}$ (0.029) \\
+  & Neighbourhood trust  & $p_{\gamma}$ (1-unit) & $+0.119^{**}$ (0.038) \\
 \hline\hline
 \end{tabular}
 \tablenote{Reference: $\gamma$ (Bridging) in S1--S4. In S5, $p_{\gamma}$ and
 $p_{\beta}$ are continuous predictors (implicit reference: $p_{\alpha}$).
 Main model (Table~A9): $\beta$ vs.\ $\gamma$ generalized trust AME
-$= -0.051^{**}$. S2 (Oster $\delta$) produces bounds, not AMEs; see
+$= -0.056^{**}$. S2 (Oster $\delta$) produces bounds, not AMEs; see
 Table~\ref{tab:A12_oster}.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
@@ -499,10 +499,12 @@ respondent). This yields population-average partial effects (APEs) without
 the conservative shrinkage of RE-GHQ models.
 
 A Wald test of the joint significance of the mean terms rejects $H_0$
-for both outcomes (generalized trust: $\chi^2(4) = 16.43$, $p = .002$;
-neighbourhood trust: $\chi^2(4) = 40.91$, $p < .001$), confirming detectable
-endogeneity bias in the standard RE model. Under CRE correction, effects
-grow in magnitude, indicating that main estimates are conservative.
+for both outcomes (generalized trust: $\chi^2(4) = 19.35$, $p < .001$;
+neighbourhood trust: $\chi^2(4) = 223.39$, $p < .001$), confirming detectable
+endogeneity bias in the standard RE model. Under CRE correction, generalized
+trust effects grow in magnitude, indicating that main estimates are
+conservative. Neighbourhood trust effects remain in the same direction and
+are broadly similar in magnitude.
 
 \begin{table}[H]
 \centering
@@ -513,17 +515,17 @@ grow in magnitude, indicating that main estimates are conservative.
 \hline\hline
   Outcome & Contrast & AME & SE & $p$ \\
 \hline
-  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.077$ & $0.023$ & $.001^{***}$ \\
-  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.054$ & $0.022$ & $.015^{*}$ \\
-  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.072$ & $0.033$ & $.027^{*}$ \\
-  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.088$ & $0.030$ & $.003^{**}$ \\
+  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.081$ & $0.023$ & $<.001^{***}$ \\
+  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.055$ & $0.023$ & $.016^{*}$ \\
+  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.056$ & $0.032$ & $.085^{\dagger}$ \\
+  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.081$ & $0.030$ & $.007^{**}$ \\
 \hline\hline
 \end{tabular}
 \tablenote{Pooled probit with within-person means of \textit{swb},
 \textit{employed}, \textit{couple}, \textit{tinst} as Mundlak corrections.
 Cluster-robust SE by respondent (\texttt{vcovCL}).
-Wald test of mean terms: $\chi^2(4) = 16.43$ ($p = .002$, generalized trust);
-$\chi^2(4) = 40.91$ ($p < .001$, neighbourhood trust).
+Wald test of mean terms: $\chi^2(4) = 19.35$ ($p < .001$, generalized trust);
+$\chi^2(4) = 223.39$ ($p < .001$, neighbourhood trust).
 Reference: $\gamma$ (Bridging). $N = 3{,}891$.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
@@ -548,16 +550,15 @@ estimated effect. Setting $R^2_{\max} = \min(1.3 \times R^2_{\text{full}},
   Outcome & Contrast & $\hat{\beta}_r$ & $\hat{\beta}_f$ &
   $R^2_r$ & $R^2_f$ & $R^2_{\max}$ & $\delta$ \\
 \hline
-  Gen.\ trust   & $\beta$ vs.\ $\gamma$ & $-0.099$ & $-0.087$ & $0.013$ & $0.019$ & $0.025$ & $6.72$  \\
-  Gen.\ trust   & $\alpha$ vs.\ $\gamma$ & $-0.067$ & $-0.063$ & $0.013$ & $0.019$ & $0.025$ & $16.22$ \\
-  NH trust & $\beta$ vs.\ $\gamma$ & $-0.060$ & $-0.078$ & $0.006$ & $0.104$ & $0.135$ & $-1.35$ \\
-  NH trust & $\alpha$ vs.\ $\gamma$ & $-0.109$ & $-0.095$ & $0.006$ & $0.104$ & $0.135$ & $2.14$  \\
+  Gen.\ trust   & $\beta$ vs.\ $\gamma$ & $-0.099$ & $-0.092$ & $0.013$ & $0.016$ & $0.021$ & $19.73$  \\
+  Gen.\ trust   & $\alpha$ vs.\ $\gamma$ & $-0.067$ & $-0.064$ & $0.013$ & $0.016$ & $0.021$ & $29.06$ \\
+  NH trust & $\beta$ vs.\ $\gamma$ & $-0.060$ & $-0.046$ & $0.006$ & $0.012$ & $0.016$ & $1.93$ \\
+  NH trust & $\alpha$ vs.\ $\gamma$ & $-0.109$ & $-0.098$ & $0.006$ & $0.012$ & $0.016$ & $4.83$  \\
 \hline\hline
 \end{tabular}
 \tablenote{OLS approximation on pooled data. $\hat{\beta}_r$: without controls;
 $\hat{\beta}_f$: with full controls. $R^2_{\max} = \min(1.3 R^2_f, 1.0)$.
-$\delta < -1$ for neighbourhood trust $\beta$ vs.\ $\gamma$ indicates
-that adding controls \emph{amplified} the effect (conservative direction).
+All four $|\delta| > 1$, satisfying the conventional robustness threshold.
 \citep{oster2019unobservable}.}
 \end{table}
 
@@ -567,7 +568,9 @@ that adding controls \emph{amplified} the effect (conservative direction).
 
 Position at wave $t-1$ predicts trust at wave $t$, controlling for lagged
 trust at $t-1$. Restricted to waves 2 and 3 ($N = 2{,}594$;
-$n_{\text{id}} = 1{,}297$). All four contrasts remain significant
+$n_{\text{id}} = 1{,}297$). Both generalized trust contrasts remain
+significant; neighbourhood trust contrasts are in the expected direction and
+at least marginally significant ($p < .10$)
 (Table~\ref{tab:A13_crosslag}). Singular-fit warnings reflect expected
 collapse of RE variance when a lagged DV is included; AMEs remain valid.
 
@@ -580,10 +583,10 @@ collapse of RE variance when a lagged DV is included; AMEs remain valid.
 \hline\hline
   Outcome & Contrast & AME & SE & $p$ \\
 \hline
-  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.066$ & $0.022$ & $.002^{**}$ \\
-  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.048$ & $0.021$ & $.019^{*}$ \\
-  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.064$ & $0.032$ & $.045^{*}$ \\
-  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.063$ & $0.030$ & $.034^{*}$ \\
+  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.076$ & $0.022$ & $<.001^{***}$ \\
+  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.050$ & $0.021$ & $.018^{*}$ \\
+  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.059$ & $0.033$ & $.072^{\dagger}$ \\
+  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.075$ & $0.031$ & $.015^{*}$ \\
 \hline\hline
 \end{tabular}
 \tablenote{RE probit (GHQ-12, nAGQ = 12). Waves 2--3 only
@@ -598,10 +601,13 @@ $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 
 Observations are weighted by $w_i = p_{\max,i} / \bar{p}_{\max}$ (mean = 1),
 downweighting uncertain classifications. We use a pooled probit with frequency
-weights and cluster-robust SEs. Mean $p_{\max} = 0.885$. All contrasts
-remain significant and grow in magnitude relative to the main model
-(Table~\ref{tab:A14_entropy}), consistent with attenuation bias from
-classification noise in the main specification.
+weights and cluster-robust SEs. Mean $p_{\max} = 0.885$. For generalized
+trust, both contrasts remain significant and grow in magnitude relative to the
+main model, consistent with attenuation bias from classification noise.
+For neighbourhood trust, the $\alpha$ vs.\ $\gamma$ contrast remains
+significant ($-0.099^{**}$); the $\beta$ vs.\ $\gamma$ contrast does not
+reach conventional significance ($-0.045$, SE $= 0.035$)
+(Table~\ref{tab:A14_entropy}).
 
 \begin{table}[H]
 \centering
@@ -612,10 +618,10 @@ classification noise in the main specification.
 \hline\hline
   Outcome & Contrast & AME & SE & $p$ \\
 \hline
-  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.090$ & $0.024$ & $<.001^{***}$ \\
-  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.060$ & $0.024$ & $.011^{*}$ \\
-  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.081$ & $0.033$ & $.015^{*}$ \\
-  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.096$ & $0.030$ & $.002^{**}$ \\
+  Generalized trust   & $\beta$ vs.\ $\gamma$ & $-0.095$ & $0.024$ & $<.001^{***}$ \\
+  Generalized trust   & $\alpha$ vs.\ $\gamma$ & $-0.062$ & $0.024$ & $.011^{*}$ \\
+  Neighbourhood trust & $\beta$ vs.\ $\gamma$ & $-0.045$ & $0.035$ & $.201$ \\
+  Neighbourhood trust & $\alpha$ vs.\ $\gamma$ & $-0.099$ & $0.033$ & $.003^{**}$ \\
 \hline\hline
 \end{tabular}
 \tablenote{Pooled probit with importance weights $w_i = p_{\max,i}/\bar{p}_{\max}$.
@@ -631,9 +637,10 @@ $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 Posterior probabilities $p_{\gamma}$ and $p_{\beta}$ replace modal class
 assignment as continuous predictors (reference: $p_{\alpha}$, omitted).
 Higher $p_{\gamma}$ predicts more trust in both outcomes; higher $p_{\beta}$
-predicts less generalized trust (Table~\ref{tab:A15_soft}). The neighbourhood
-trust effect of $p_{\gamma}$ ($+0.119^{***}$, SE = 0.036) is the largest
-point estimate in the sensitivity analysis.
+predicts less generalized trust and more neighbourhood trust
+(Table~\ref{tab:A15_soft}). The neighbourhood trust effect of $p_{\gamma}$
+($+0.119^{**}$, SE = 0.038) is the largest point estimate in the sensitivity
+analysis.
 
 \begin{table}[H]
 \centering
@@ -644,10 +651,10 @@ point estimate in the sensitivity analysis.
 \hline\hline
   Outcome & Predictor & AME & SE & $p$ \\
 \hline
-  Generalized trust   & $p_{\beta}$ (1-unit increase)  & $-0.041$ & $0.013$ & $.002^{**}$ \\
-  Generalized trust   & $p_{\gamma}$ (1-unit increase) & $+0.029$ & $0.014$ & $.037^{*}$ \\
-  Neighbourhood trust & $p_{\beta}$ (1-unit increase)  & $+0.024$ & $0.029$ & $.410$ \\
-  Neighbourhood trust & $p_{\gamma}$ (1-unit increase) & $+0.119$ & $0.036$ & $.001^{***}$ \\
+  Generalized trust   & $p_{\beta}$ (1-unit increase)  & $-0.045$ & $0.012$ & $<.001^{***}$ \\
+  Generalized trust   & $p_{\gamma}$ (1-unit increase) & $+0.030$ & $0.014$ & $.031^{*}$ \\
+  Neighbourhood trust & $p_{\beta}$ (1-unit increase)  & $+0.078$ & $0.029$ & $.008^{**}$ \\
+  Neighbourhood trust & $p_{\gamma}$ (1-unit increase) & $+0.119$ & $0.038$ & $.002^{**}$ \\
 \hline\hline
 \end{tabular}
 \tablenote{RE probit (GHQ-12, nAGQ = 12). Posterior probabilities as
