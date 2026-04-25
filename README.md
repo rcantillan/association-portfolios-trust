@@ -2,7 +2,7 @@
 
 This repository contains the replication materials for the manuscript:
 
-**"Structural Precarity and the Civil Society–Trust Gap: Portfolio Configurations and Durability Under Inequality"**  
+**"Why Associational Life Fails to Build Generalized Trust under Inequality"**  
 
 ---
 
