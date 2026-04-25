@@ -3,7 +3,6 @@
 This repository contains the replication materials for the manuscript:
 
 **"Structural Precarity and the Civil Society–Trust Gap: Portfolio Configurations and Durability Under Inequality"**  
-Roberto Cantillan, Gustavo Ahumada, Vicente Espinoza  
 
 ---
 
@@ -129,9 +128,3 @@ To reproduce a single stage, source the relevant script directly — each script
 | CRE/Mundlak AME β vs. γ — generalized trust | −0.081 (SE = 0.023, p < .001) |
 
 ---
-
-## Citation
-
-If you use these materials, please cite the paper as:
-
-> Cantillan, R., Ahumada, G., & Espinoza, V. (under review). Why Associational Life Fails to Build Generalized Trust under Inequality.
