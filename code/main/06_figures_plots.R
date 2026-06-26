@@ -1,17 +1,13 @@
-# ==============================================================================
-# figures_plots.R — SSR-ready figures (FINAL: consistent state colors + better labels)
-# ------------------------------------------------------------------------------
+# ── 06_figures_plots.R — Main manuscript figures ──────────────────────────────
 # Requires in memory:
-#   - prob_df: data.frame with columns item + State_1..State_3 (P(Y=1|state))
-#   - Pi_avg:  3x3 matrix of average transition probabilities
-#   - K_BASELINE (3), MOD_TRANS (1)
-#   - ggsave_safe()  (your helper)
-# ------------------------------------------------------------------------------
-# Outputs (output/):
-#   - fig_profiles_clean.(png/pdf)
-#   - fig_transition_ggraph.(png/pdf)
-#   - fig_transition_heatmap.(png/pdf)
-# ==============================================================================
+#   prob_df: data.frame with columns item + State_1..State_3 (P(Y=1|state))
+#   Pi_avg:  3x3 matrix of average transition probabilities
+#   K_BASELINE (3), MOD_TRANS (1), ggsave_safe()
+#
+# Outputs:
+#   output/fig_profiles_clean.(png/pdf)
+#   output/fig_transition_ggraph.(png/pdf)
+#   output/fig_transition_heatmap.(png/pdf)
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -25,7 +21,7 @@ suppressPackageStartupMessages({
   library(here)
 })
 
-# ---------- Theme ----------
+# ── Theme ────────────────────────────────────────────────────────────────────
 theme_ssr_big <- function(base_size = 16, base_family = "sans") {
   theme_minimal(base_size = base_size, base_family = base_family) +
     theme(
@@ -41,7 +37,7 @@ theme_ssr_big <- function(base_size = 16, base_family = "sans") {
     )
 }
 
-# ---------- Labels ----------
+# ── Labels ───────────────────────────────────────────────────────────────────
 domain_order <- c("nhg","religious","political","union","professional","charity","sport","student")
 
 domain_labels2 <- c(
@@ -67,9 +63,7 @@ state_palette <- setNames(state_key$col, state_key$state_long)
 state_levels  <- state_key$state_long
 states_short  <- state_key$state_short
 
-# ==============================================================================
-# FIGURE 1 — Profiles: vertical facets + horizontal bars
-# ==============================================================================
+# ── Figure 1 — Membership profiles ───────────────────────────────────────────
 prob_long <- prob_df |>
   pivot_longer(starts_with("State_"), names_to = "state_raw", values_to = "prob") |>
   left_join(state_key, by = "state_raw") |>
@@ -101,15 +95,8 @@ p_profiles_clean <- ggplot(prob_long, aes(x = item_lab, y = prob, fill = state_l
 ggsave_safe("fig_profiles_clean.png", p_profiles_clean, width = 8.5, height = 9.5)
 ggsave(here::here("output","fig_profiles_clean.pdf"), p_profiles_clean, width = 8.5, height = 9.5)
 
-# ==============================================================================
-# FIGURE 2 — Transition network (GGFORCE FINAL: directed arrows + width variation
-#           + edges end exactly on the node "ring"/self-loop circle)
-#   - 9 transitions from Pi_avg
-#   - 2 distinct arcs per unordered pair (i→j and j→i)
-#   - labels embedded on each directed arc
-#   - arrowheads drawn as short CURVED bezier pieces near the end (crisp)
-#   - IMPORTANT: edges are TRIMMED to start/end on the node ring (NODE_R)
-# ==============================================================================
+# ── Figure 2 — Transition network ─────────────────────────────────────────────
+# 9 directed transitions from Pi_avg; arrows trimmed to node ring (NODE_R).
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -120,9 +107,7 @@ suppressPackageStartupMessages({
   library(here)
 })
 
-# -----------------------
-# Knobs you may tweak
-# -----------------------
+# Tunable knobs
 CURV_OUT  <- 1.25
 CURV_IN   <- 0.65
 
@@ -151,9 +136,7 @@ A_MAX <- 0.95
 LAB_DIGITS <- 3
 fmt <- function(x) sprintf(paste0("%.", LAB_DIGITS, "f"), x)
 
-# -----------------------
-# State labels + colors
-# -----------------------
+# State labels and colors
 states_short <- c("α","β","γ")
 state_levels <- c("α (isolation)","β (clustering)","γ (bridging)")
 state_palette <- c(
@@ -162,9 +145,7 @@ state_palette <- c(
   "γ (bridging)"   = "#E15759"
 )
 
-# -----------------------
-# Nodes (triangle layout)
-# -----------------------
+# Nodes in triangle layout
 nodes <- tibble(
   name = states_short,
   state_long = state_levels,
@@ -172,9 +153,7 @@ nodes <- tibble(
   y = c(2,  0,  0)
 )
 
-# -----------------------
-# 1) Extract ALL 9 transitions from Pi_avg
-# -----------------------
+# 1) Extract all 9 transitions from Pi_avg
 edges <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
   as_tibble() %>%
   mutate(
@@ -191,9 +170,7 @@ edges <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
 
 stopifnot(nrow(edges) == 9)
 
-# -----------------------
 # 2) Join node coordinates and compute geometry
-# -----------------------
 E <- edges %>%
   left_join(nodes %>% select(name, x, y), by = c("from" = "name")) %>% rename(x1 = x, y1 = y) %>%
   left_join(nodes %>% select(name, x, y), by = c("to"   = "name")) %>% rename(x2 = x, y2 = y) %>%
@@ -221,9 +198,7 @@ E <- edges %>%
     curv_mag  = if_else(curv_sign == 1, CURV_OUT, CURV_IN)
   )
 
-# -----------------------
-# 3) Non-loop edges: TRIM endpoints to touch the node ring
-# -----------------------
+# 3) Non-loop edges: trim endpoints to touch the node ring
 E_nl <- E %>%
   filter(!is_loop) %>%
   mutate(
@@ -289,9 +264,7 @@ label_nl <- E_nl %>%
   ungroup() %>%
   select(lx, ly, label)
 
-# -----------------------
-# 4) Loops: circles + labels (also trimmed edges already avoid entering the ring)
-# -----------------------
+# 4) Loops: circles + labels
 E_lp <- E %>% filter(is_loop)
 
 loop_df <- E_lp %>%
@@ -311,9 +284,7 @@ loop_labels <- loop_df %>%
   ungroup() %>%
   select(lx, ly, label)
 
-# -----------------------
-# 5) Plot
-# -----------------------
+# 5) Build plot
 p_trans <- ggplot() +
 
   # Curved edges (base)
@@ -391,9 +362,7 @@ ggsave(here::here("output","fig_transition_ggraph.png"), p_trans, width = 7.8, h
 
 p_trans
 
-# ==============================================================================
-# FIGURE 3 — Transition heatmap (optional SI)
-# ==============================================================================
+# ── Figure 3 — Transition heatmap (SI) ───────────────────────────────────────
 Pi_heat <- as.data.frame(as.table(Pi_avg))
 colnames(Pi_heat) <- c("from_i","to_i","p")
 

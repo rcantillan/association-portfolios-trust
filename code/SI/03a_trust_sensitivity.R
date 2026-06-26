@@ -1,46 +1,20 @@
-# ==============================================================================
-# 03a_trust_sensitivity.R — Sensitivity Analyses (Supplementary Information)
-# ==============================================================================
-# Runs five sensitivity checks to accompany the main trust models (03_trust_models.R).
-# All outputs go to output/SI_*.
+# ── 03a_trust_sensitivity.R — Sensitivity analyses (S1-S5) ───────────────────
+# Five sensitivity checks accompanying main trust models (03_trust_models.R).
 #
-# S1 — Correlated Random Effects / Mundlak probit
-#        If RE estimates are biased by unobserved heterogeneity, CRE corrects this
-#        by adding within-person means of time-varying covariates. If the mean
-#        terms are jointly zero, the standard RE is valid.
+# S1 — CRE/Mundlak probit: within-person means correct unobserved heterogeneity.
+# S2 — Oster (2019) delta: coefficient stability / omitted variable bounds.
+# S3 — Cross-lagged: clase_{t-1} -> trust_t | trust_{t-1}.
+# S4 — Entropy-weighted: observation weights = p_max (posterior certainty).
+# S5 — Soft assignment: p_gamma, p_beta as continuous predictors.
 #
-# S2 — Oster (2019) δ (coefficient stability / omitted variable bounds)
-#        Asks how strongly a confounder would need to correlate with both clase
-#        and trust to fully explain the estimated AME. δ > 1 is the conventional
-#        threshold for robustness. Computed via OLS approximation on pooled data.
+# Inputs:
+#   data/dt_states_cov.rds, data/dt_analysis.rds
 #
-# S3 — Cross-lagged specification (clase_{t-1} → trust_t | trust_{t-1})
-#        Stronger test of temporal precedence. Clase at prior wave predicts trust
-#        at next wave, controlling for lagged trust. Uses waves 2 and 3 only.
-#
-# S4 — Entropy-weighted regression (observation weights = p_max)
-#        Downweights observations with uncertain latent state assignment.
-#        If the effect of clase on trust is driven by confidently classified
-#        observations, AMEs should be stable or larger here.
-#
-# S5 — Soft assignment (p_gamma, p_beta as continuous predictors)
-#        Avoids modal classification entirely. The gradient in posterior
-#        probabilities directly predicts trust without discretizing positions.
-#
-# INPUTS:
-#   data/dt_states_cov.rds    (from 02_latent_markov.R)
-#   data/dt_analysis.rds      (from 01_descriptive_stats.R)
-#
-# OUTPUTS:
-#   output/SI_S1_CRE_mundlak.csv
-#   output/SI_S2_oster_delta.csv
-#   output/SI_S3_crosslagged.csv
-#   output/SI_S4_entropy_weighted.csv
-#   output/SI_S5_soft_assignment.csv
-#   output/SI_sensitivity_comparison.csv   (all AMEs side by side)
-#   output/SI_sensitivity_log.txt
-#   output/SI_sensitivity_tables.txt       (LaTeX-ready)
-# ==============================================================================
+# Outputs:
+#   output/SI_S1_CRE_mundlak.csv, SI_S2_oster_delta.csv, SI_S3_crosslagged.csv
+#   output/SI_S4_entropy_weighted.csv, SI_S5_soft_assignment.csv
+#   output/SI_sensitivity_comparison.csv, SI_sensitivity_log.txt
+#   output/SI_sensitivity_tables.txt
 
 options(marginaleffects_safe = FALSE)
 
@@ -58,7 +32,7 @@ suppressPackageStartupMessages(library(merDeriv))
 
 dir.create(here::here("output"), showWarnings = FALSE)
 
-NAGQ <- 12L   # mismo que 03_trust_models.R
+NAGQ <- 12L   # same as 03_trust_models.R
 
 # Log
 LOG <- here::here("output", "SI_sensitivity_log.txt")
@@ -72,9 +46,7 @@ lg <- function(...) {
 lg("=== 03a_trust_sensitivity.R | ", Sys.time(), " ===")
 lg("nAGQ = ", NAGQ)
 
-# ==============================================================================
-# 0. CARGA Y PREPARACIÓN (idéntica a 03_trust_models.R)
-# ==============================================================================
+# ── 0. Load and prepare (mirrors 03_trust_models.R) ──────────────────────────
 stop_if_missing(c(
   here::here("data", "dt_states_cov.rds"),
   here::here("data", "dt_analysis.rds")
@@ -113,21 +85,19 @@ dt <- dt %>%
     clase_label = recode(as.character(clase), !!!STATE_LABELS_FIG)
   )
 
-# Controles base (sin education — ver 03_trust_models.R)
+# Controls: swb, employed, couple (education excluded -- see 03_trust_models.R)
 CONTROLS_TRUST <- c("swb", "employed", "couple")
 
 ctrl_use <- CONTROLS_TRUST[
   CONTROLS_TRUST %in% names(dt) &
   sapply(CONTROLS_TRUST, function(v) sum(!is.na(dt[[v]])) > 0)
 ]
-lg("Controles disponibles: ", paste(ctrl_use, collapse = ", "))
+lg("Controls available: ", paste(ctrl_use, collapse = ", "))
 lg("N base: ", nrow(dt %>% filter(!is.na(clase), !is.na(trust))), " obs")
 
-# ==============================================================================
-# HELPERS
-# ==============================================================================
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-# Etiqueta contrasts con símbolos canónicos
+# Label contrasts with canonical Greek symbols
 label_contrasts <- function(df) {
   df %>% mutate(
     contrast_label = str_replace_all(
@@ -146,7 +116,7 @@ label_contrasts <- function(df) {
   )
 }
 
-# Tabla LaTeX simple
+# Minimal LaTeX table builder
 to_latex <- function(df, caption, label) {
   cols <- intersect(c("spec","outcome","contrast_label","estimate",
                       "std.error","p.value","sig"), names(df))
@@ -165,14 +135,12 @@ to_latex <- function(df, caption, label) {
   )
 }
 
-latex_out <- character(0)   # acumulador de tablas LaTeX
+latex_out <- character(0)   # accumulator for LaTeX tables
 
-# ==============================================================================
-# S1 — CORRELATED RANDOM EFFECTS / MUNDLAK PROBIT
-# ==============================================================================
+# ── S1 — Correlated random effects / Mundlak probit ──────────────────────────
 lg("\n--- S1: CRE / Mundlak probit ---")
 
-# Variables time-varying para las que agregar la media within-person
+# Time-varying variables for within-person mean correction
 tv_vars <- intersect(c("swb", "employed", "couple", "tinst"), names(dt))
 
 dt_cre <- dt %>%
@@ -272,9 +240,7 @@ latex_out <- c(latex_out,
            caption = "S1: Correlated Random Effects (Mundlak) pooled probit with cluster-robust standard errors (\\texttt{vcovCL} by respondent). Within-person means of time-varying covariates added as Mundlak corrections. Wald test of joint significance of mean terms reported in text. Reference: $\\gamma$ (Bridging).",
            label   = "tab:SI_S1_CRE"))
 
-# ==============================================================================
-# S2 — OSTER (2019) δ
-# ==============================================================================
+# ── S2 — Oster (2019) delta ───────────────────────────────────────────────────
 lg("\n--- S2: Oster (2019) delta ---")
 #
 # Method: OLS pooled regression as approximation (standard in sociology papers).
@@ -350,9 +316,7 @@ latex_out <- c(latex_out,
            caption = "S2: Oster (2019) $\\delta$. Computed via OLS approximation on pooled data. $\\delta > 1$ indicates robustness by convention. Reference category: $\\gamma$ (Bridging). $R^2_{\\max} = \\min(1.3 \\times R^2_{\\text{full}}, 1)$.",
            label   = "tab:SI_S2_oster"))
 
-# ==============================================================================
-# S3 — CROSS-LAGGED (clase_{t-1} → trust_t | trust_{t-1})
-# ==============================================================================
+# ── S3 — Cross-lagged (clase_{t-1} -> trust_t | trust_{t-1}) ─────────────────
 lg("\n--- S3: Cross-lagged specification ---")
 #
 # clase at wave t-1 predicts trust at wave t, controlling for lagged trust.
@@ -433,9 +397,7 @@ latex_out <- c(latex_out,
            caption = "S3: Cross-lagged specification. Portfolio position at wave $t-1$ predicts trust at wave $t$, controlling for lagged trust. Waves 2 and 3 only. Reference: $\\gamma$ (Bridging).",
            label   = "tab:SI_S3_crosslag"))
 
-# ==============================================================================
-# S4 — ENTROPY-WEIGHTED (weights = p_max)
-# ==============================================================================
+# ── S4 — Entropy-weighted regression (weights = p_max) ────────────────────────
 lg("\n--- S4: Entropy-weighted regression ---")
 #
 # Each person-wave observation is weighted by its maximum posterior probability
@@ -509,9 +471,7 @@ latex_out <- c(latex_out,
            caption = "S4: Entropy-weighted pooled probit. Observations weighted by maximum posterior probability $p_{\\max}$ (normalized to mean 1). Cluster-robust standard errors by respondent. Reference: $\\gamma$ (Bridging).",
            label   = "tab:SI_S4_entropy"))
 
-# ==============================================================================
-# S5 — SOFT ASSIGNMENT (p_gamma, p_beta as continuous predictors)
-# ==============================================================================
+# ── S5 — Soft assignment (p_gamma, p_beta as continuous predictors) ───────────
 lg("\n--- S5: Soft assignment ---")
 #
 # Instead of modal classification, uses posterior probabilities directly as
@@ -587,9 +547,7 @@ latex_out <- c(latex_out,
            caption = "S5: Soft assignment specification. Posterior probabilities $p_{\\gamma}$ and $p_{\\beta}$ enter as continuous predictors (reference: $p_{\\alpha}$, omitted). AME reports marginal effect of a 1-unit increase in each posterior probability.",
            label   = "tab:SI_S5_soft"))
 
-# ==============================================================================
-# COMPARISON TABLE — AMEs across all specifications
-# ==============================================================================
+# ── Comparison: AMEs across all specifications ────────────────────────────────
 lg("\n--- Comparison table: all sensitivity specs ---")
 
 # Standardize columns for comparison
@@ -621,9 +579,7 @@ comparison %>%
   select(sensitivity, outcome, contrast, est_sig, std.error) %>%
   print(n = 40)
 
-# ==============================================================================
-# WRITE LaTeX TABLES
-# ==============================================================================
+# ── Write LaTeX tables ────────────────────────────────────────────────────────
 latex_out <- c(
   "% === SI Sensitivity Tables — auto-generated by 03a_trust_sensitivity.R ===",
   "% Paste each table into your SI .tex file.\n",
@@ -632,9 +588,7 @@ latex_out <- c(
 writeLines(latex_out, here::here("output", "SI_sensitivity_tables.txt"))
 lg("Saved: SI_sensitivity_tables.txt")
 
-# ==============================================================================
-# DONE
-# ==============================================================================
+# ── Done ──────────────────────────────────────────────────────────────────────
 lg("\n[03a_trust_sensitivity.R] DONE.")
 lg("Outputs:")
 lg("  SI_S1_CRE_mundlak.csv        — CRE/Mundlak AMEs + Wald test of mean terms")

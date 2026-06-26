@@ -1,6 +1,4 @@
-# ==============================================================================
-# 003b_precarity_transitions_SES.R — H3: Structural Precarity (SES-stratified exits)
-# ------------------------------------------------------------------------------
+# ── 03b_precarity_transitions_SES.R — H3: Structural precarity (SES-stratified exits) ─
 # H3 (Structural precarity): Position γ (bridging) will exhibit lower temporal
 # stability than Positions α and β, with higher exit probabilities among
 # individuals facing greater resource constraints.
@@ -25,7 +23,6 @@
 #   output/h3_exit_gamma_ames.csv
 #   output/h3_allpos_exit_ames.csv
 #   output/h3_summary_for_paper.txt
-# ==============================================================================
 
 suppressPackageStartupMessages({
   library(here)
@@ -43,9 +40,7 @@ suppressPackageStartupMessages({
 source(here::here("code", "00_setup.R"))
 dir.create(here::here("output"), showWarnings = FALSE, recursive = TRUE)
 
-# ==============================================================================
-# HELPERS
-# ==============================================================================
+# ── HELPERS ────────────────────────────────────────────────────────────────
 
 sig_stars <- function(p) {
   dplyr::case_when(
@@ -68,18 +63,14 @@ write_latex <- function(tex_lines, filename) {
   message("  LaTeX: output/", filename)
 }
 
-# ==============================================================================
-# 0) Load data
-# ==============================================================================
+# ── 0) Load data ───────────────────────────────────────────────────────────
 dt_states   <- readRDS(here::here("data", "dt_states_cov.rds"))
 dt_analysis <- readRDS(here::here("data", "dt_analysis.rds"))
 
 message("dt_states:   ", nrow(dt_states),   " obs | ", n_distinct(dt_states$idencuesta), " ids")
 message("dt_analysis: ", nrow(dt_analysis), " obs | ", n_distinct(dt_analysis$id),       " ids")
 
-# ==============================================================================
-# 1) Build transition dataset
-# ==============================================================================
+# ── 1) Build transition dataset ────────────────────────────────────────────
 dt_states <- dt_states %>%
   mutate(id       = as.character(idencuesta),
          position = as.character(position))
@@ -125,9 +116,7 @@ dt_trans <- dt_t %>%
 message("Total transitions: ", nrow(dt_trans),
         " | From \u03b3: ", sum(dt_trans$position == "gamma", na.rm=TRUE))
 
-# ==============================================================================
-# 2) Persistence by position × wave
-# ==============================================================================
+# ── 2) Persistence by position × wave ──────────────────────────────────────
 persistence_tbl <- dt_trans %>%
   group_by(position, wave_f) %>%
   summarise(n_transitions = n(),
@@ -147,9 +136,7 @@ pers_pooled <- dt_trans %>%
   group_by(position) %>%
   summarise(p_stay = mean(stay_same, na.rm=TRUE), n=n(), .groups="drop")
 
-# ==============================================================================
-# 3) Exit models from γ
-# ==============================================================================
+# ── 3) Exit models from γ ──────────────────────────────────────────────────
 dt_gamma_exits <- dt_trans %>% filter(position=="gamma", !is.na(exit_gamma))
 message("\n\u03b3-exit subsample: ", nrow(dt_gamma_exits))
 message("Exit rate from \u03b3: ", round(mean(dt_gamma_exits$exit_gamma), 3))
@@ -174,9 +161,7 @@ ames_ord  <- avg_comparisons(m_edu_ord,  variables=c("edu_ord","employed"),  vco
 
 message("\n--- AMEs full model ---"); print(ames_full)
 
-# ==============================================================================
-# 4) Specificity: exit models for all starting positions
-# ==============================================================================
+# ── 4) Specificity: exit models for all starting positions ─────────────────
 fit_exit_model <- function(pos_label) {
   dt_sub <- dt_trans %>% filter(position==pos_label) %>%
     mutate(exit_pos=1L-stay_same) %>% filter(!is.na(exit_pos))
@@ -194,9 +179,7 @@ fit_exit_model <- function(pos_label) {
 allpos_ames <- bind_rows(lapply(c("alpha","beta","gamma"), fit_exit_model))
 write_csv(allpos_ames, here::here("output","h3_allpos_exit_ames.csv"))
 
-# ==============================================================================
-# 5) Save combined AMEs (intermediate)
-# ==============================================================================
+# ── 5) Save combined AMEs (intermediate) ───────────────────────────────────
 exit_gamma_ames <- bind_rows(
   ames_edu  %>% as_tibble() %>% mutate(model="M1: Education only"),
   ames_emp  %>% as_tibble() %>% mutate(model="M2: Employment only"),
@@ -214,9 +197,7 @@ print(ames_full %>% as_tibble() %>% select(term,estimate,std.error,p.value) %>%
         mutate(across(where(is.numeric),~round(.x,4))))
 sink()
 
-# ==============================================================================
-# 6) FIGURES
-# ==============================================================================
+# ── 6) FIGURES ─────────────────────────────────────────────────────────────
 
 # Data for figures
 exit_by_pos <- dt_trans %>%
@@ -336,9 +317,7 @@ ggsave(here::here("output","figure_h3_SI_panelA.pdf"),
        p_A, width=5.5, height=4.8)
 message("  SI figure (A only): output/figure_h3_SI_panelA.png/.pdf")
 
-# ==============================================================================
-# 7) Scalar values for inline text and tables
-# ==============================================================================
+# ── 7) Scalar values for inline text and tables ────────────────────────────
 p_exit_alpha  <- 1 - pers_pooled$p_stay[pers_pooled$position=="alpha"]
 p_exit_beta   <- 1 - pers_pooled$p_stay[pers_pooled$position=="beta"]
 p_exit_gamma  <- mean(dt_gamma_exits$exit_gamma)
@@ -354,9 +333,7 @@ emp_ame_p   <- ames_full %>% filter(term=="employed")  %>% pull(p.value)
 alpha_edu <- allpos_ames %>% filter(starting_position=="alpha", term=="edu_high") %>% pull(estimate)
 beta_edu  <- allpos_ames %>% filter(starting_position=="beta",  term=="edu_high") %>% pull(estimate)
 
-# ==============================================================================
-# 8) Inline numbers — copy-paste paragraph for §3.2
-# ==============================================================================
+# ── 8) Inline numbers — copy-paste paragraph for §3.2 ──────────────────────
 sink(here::here("output","h3_inline_numbers.txt"))
 cat("================================================================\n")
 cat("INLINE NUMBERS — §3.2 Structural Precarity\n")
@@ -415,9 +392,7 @@ toward bridging, whereas among respondents in $\\gamma$ it predicts retention
 sink()
 message("  Inline numbers: output/h3_inline_numbers.txt")
 
-# ==============================================================================
-# 9) LaTeX TABLES for Overleaf
-# ==============================================================================
+# ── 9) LaTeX TABLES for Overleaf ───────────────────────────────────────────
 
 # ── Table 3 (PAPER): Persistence + M3 AMEs ───────────────────────────────────
 pers_rows <- pers_pooled %>%
@@ -629,15 +604,12 @@ si_a4_lines <- c(
 )
 write_latex(si_a4_lines, "latex_SI_tableA4.txt")
 
-# ==============================================================================
-# 10) CLUSTER BOOTSTRAP VALIDATION (SI robustness for small-N subsample)
-# ==============================================================================
+# ── 10) CLUSTER BOOTSTRAP VALIDATION (SI robustness for small-N subsample) ─
 # Resamples ids (not obs) → preserves within-person correlation.
 # For each resample: refit m_full, compute AMEs of edu_high and employed.
 # Reports: bootstrap SE, percentile CI [2.5%, 97.5%], and comparison with
 # the cluster-robust SEs from Section 3.
 # B = 999 iterations; fast because glm (not glmm).
-# ------------------------------------------------------------------------------
 
 message("\n--- Bootstrap validation (cluster resample, B=999) ---")
 
@@ -805,9 +777,7 @@ si_boot_lines <- c(
 )
 write_latex(si_boot_lines, "latex_SI_tableA5_bootstrap.txt")
 
-# ==============================================================================
-# FINAL MANIFEST
-# ==============================================================================
+# ── FINAL MANIFEST ─────────────────────────────────────────────────────────
 message("\n", strrep("=",65))
 message("PAPER (main text):")
 message("  figure_h3_paper.png/.pdf          -> Figure 2 (Panel A + B combined)")

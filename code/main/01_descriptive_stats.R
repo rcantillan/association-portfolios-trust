@@ -1,42 +1,21 @@
-# ==============================================================================
-# 01_descriptive_stats.R — Descriptivos y preparación del panel balanceado
-# ------------------------------------------------------------------------------
-# ACTUALIZADO post-comparación con estimation.do (Feb 2024).
-# CAMBIOS:
-#   (1) Filtros: muestra==1, tipo_atricion==1 (antes del filtro de olas)
-#   (2) Trust vecinal: t01 (no c03)
-#   (3) Membership: usa MEMBER_CODE_LOGIC de 00_setup.R
-#   (4) Nuevas variables: swb, couple, t02_01 (controles del paper)
-#   (5) Educación: recode 5 niveles igual que Stata
-#   (6) Balanceo: replica lógica Stata (probit e(sample) + n_group==3)
-#       → paso (a) drop obs con covariables missing;
-#         paso (b) keep solo ids con 3 olas
+# ── 01_descriptive_stats.R — Descriptives and balanced panel construction ────
 #
-# IMPORTANTE (estimation.do línea 76-82):
-#   Stata balancea así:
-#     probit social_trust ib2.clase i.m0_sexo m0_edad i.swb i.employed
-#            i.couple i.t02_01 i.ola, vce(cluster idencuesta)
-#     gen in_model = e(sample)
-#     keep if in_model == 1
-#   Esto elimina obs que le faltan CUALQUIER covariable del modelo completo.
-#   Luego keep n_group == 3.
-#   En R replicamos esto con complete.cases() sobre las mismas variables.
+# Balancing replicates Stata estimation.do:
+#   (a) complete.cases() on all model covariates (equiv. probit e(sample))
+#   (b) keep only ids observed in all 3 waves
 #
 # Outputs:
 #   output/summary_stats_balanced.csv
 #   output/summary_stats_full.csv
 #   output/membership_by_domain.csv
-#   data/dt_analysis.rds   (dataset listo para LMM y modelos)
-# ==============================================================================
+#   data/dt_analysis.rds
 
 source(here::here("code", "00_setup.R"))
 suppressPackageStartupMessages({
   library(dplyr); library(tidyr); library(readr); library(data.table)
 })
 
-# ==============================================================================
-# 1. Cargar datos
-# ==============================================================================
+# ── 1. Load data ──────────────────────────────────────────────
 stop_if_missing(c(here::here("data", "ELSOC_Long.RData")))
 obj_names <- load(here::here("data", "ELSOC_Long.RData"))
 
@@ -45,35 +24,32 @@ raw <- if ("elsoc_long_2016_2022" %in% obj_names) {
 } else if (length(obj_names) == 1) {
   get(obj_names[1])
 } else {
-  stop("No se puede identificar el objeto ELSOC. Disponibles: ",
+  stop("Cannot identify ELSOC object. Available: ",
        paste(obj_names, collapse = ", "))
 }
 dt_raw <- dplyr::as_tibble(raw)
-message("Objeto cargado: ", nrow(dt_raw), " obs x ", ncol(dt_raw), " variables")
+message("Loaded: ", nrow(dt_raw), " obs x ", ncol(dt_raw), " variables")
 
-# ==============================================================================
-# 2. FILTROS DE MUESTRA (replicando estimation.do líneas 65-67)
-#    ANTES de filtrar por ola, para no distorsionar la composición
-# ==============================================================================
+# ── 2. Sample filters (muestra == 1, tipo_atricion == 1) ───────────────────
 dt <- dt_raw
 
 if (FILTER_MUESTRA && "muestra" %in% names(dt)) {
   n_antes <- nrow(dt)
   dt <- dt %>% dplyr::filter(muestra == 1)
-  message("Filtro muestra==1: ", n_antes, " → ", nrow(dt), " obs")
+  message("Filter muestra==1: ", n_antes, " -> ", nrow(dt), " obs")
 } else if (FILTER_MUESTRA) {
-  warning("Variable 'muestra' no encontrada. Filtro no aplicado.")
+  warning("Variable 'muestra' not found. Filter not applied.")
 }
 
 if (FILTER_TIPO_ATRICION && "tipo_atricion" %in% names(dt)) {
   n_antes <- nrow(dt)
   dt <- dt %>% dplyr::filter(tipo_atricion == 1)
-  message("Filtro tipo_atricion==1: ", n_antes, " → ", nrow(dt), " obs")
+  message("Filter tipo_atricion==1: ", n_antes, " -> ", nrow(dt), " obs")
 } else if (FILTER_TIPO_ATRICION) {
-  warning("Variable 'tipo_atricion' no encontrada. Filtro no aplicado.")
+  warning("Variable 'tipo_atricion' not found. Filter not applied.")
 }
 
-# Filtrar olas de análisis
+# Filter to analysis waves
 dt <- dt %>%
   dplyr::filter(ola %in% WAVES_RAW) %>%
   dplyr::mutate(
@@ -91,43 +67,39 @@ dt <- dt %>%
   ) %>%
   dplyr::rename(ola_orig = ola, ola = ola_rec)
 
-message("Obs en olas de análisis (1,3,6): ", nrow(dt))
+message("Observations in analysis waves (1,3,6): ", nrow(dt))
 
-# ==============================================================================
-# 3. Membresías — usa MEMBER_CODE_LOGIC global
-# ==============================================================================
+# ── 3. Membership indicators ───────────────────────────────────────────
 missing_member <- setdiff(MEMBER_ITEMS, names(dt))
 if (length(missing_member) > 0)
-  stop("Ítems de membresía no encontrados: ", paste(missing_member, collapse=", "))
+  stop("Membership items not found: ", paste(missing_member, collapse=", "))
 
 dt <- dt %>%
   dplyr::mutate(
     nhg          = member_binary(c12_01),
     religious    = member_binary(c12_02),
-    sport        = member_binary(c12_03),   # c12_03 = deportiva
-    charity      = member_binary(c12_04),   # c12_04 = caridad
-    political    = member_binary(c12_05),   # c12_05 = partido/mov
+    sport        = member_binary(c12_03),
+    charity      = member_binary(c12_04),
+    political    = member_binary(c12_05),
     professional = member_binary(c12_06),
     union        = member_binary(c12_07),
     student      = member_binary(c12_08)
   )
 
-# Verificar si existe c12_09 (ítem 9, "otra", usado en ISA Rmd 2021)
+# Check whether c12_09 (9th domain) exists in the dataset
 if (MEMBER_ITEMS_9TH %in% names(dt)) {
   dt <- dt %>% dplyr::mutate(otra = member_binary(c12_09))
   if (!"otra" %in% DOMAIN_VARS) DOMAIN_VARS <<- c(DOMAIN_VARS, "otra")
   N_DOMAINS <<- 9L
-  message("c12_09 encontrado y agregado como 9vo dominio.")
+  message("c12_09 found -- added as 9th domain.")
 } else {
-  message("c12_09 no encontrado. Usando 8 dominios.")
+  message("c12_09 not found. Using 8 domains.")
 }
 
-# ==============================================================================
-# 4. Variables de outcome
-# ==============================================================================
+# ── 4. Outcome variables ──────────────────────────────────────────────
 for (v in c(TRUST_GEN_VAR, TRUST_NH_VAR)) {
-  if (!v %in% names(dt)) stop("Variable no encontrada: ", v,
-                               "\n¿Es t01 para trust vecinal? Verificar codebook.")
+  if (!v %in% names(dt)) stop("Variable not found: ", v,
+                               "\nExpected t01 for neighbourhood trust -- check codebook.")
 }
 
 dt <- dt %>%
@@ -139,49 +111,45 @@ dt <- dt %>%
 message("Trust generalizada: ", round(mean(dt$trust, na.rm=TRUE), 3),
         " | Trust vecinal: ", round(mean(dt$trust_nh, na.rm=TRUE), 3))
 
-# ==============================================================================
-# 5. Covariables (replicando estimation.do)
-# ==============================================================================
+# ── 5. Covariates (replicating estimation.do) ─────────────────────────────
 dt <- dt %>%
   dplyr::mutate(
-    # Sexo: m0_sexo (1=hombre, 2=mujer en ELSOC) → woman = 0/1
+    # Sex: m0_sexo (1=male, 2=female in ELSOC)
     woman     = dplyr::case_when(m0_sexo == 1 ~ 0L, m0_sexo == 2 ~ 1L, TRUE ~ NA_integer_),
     edad      = to_na(m0_edad),
     education = code_education_5(.data[[EDU_VAR]]),  # 5 niveles como Stata
     edu_bin   = code_edu_binary(.data[[EDU_VAR]]),
 
-    # NUEVA: employed = 1 if m02 <= 2 (replicando estimation.do exacto)
+    # employed = 1 if m02 <= 2
     employed  = if (EMPLOY_VAR %in% names(.)) {
       code_employment(.data[[EMPLOY_VAR]])
     } else {
-      warning("'", EMPLOY_VAR, "' no encontrado."); NA_integer_
+      warning("'", EMPLOY_VAR, "' not found."); NA_integer_
     },
 
-    # NUEVA: swb = 1 if s01 > 4 (estimation.do línea 62)
+    # swb = 1 if s01 > 4
     swb = if (SWB_VAR %in% names(.)) {
       code_swb(.data[[SWB_VAR]])
     } else {
-      warning("'", SWB_VAR, "' no encontrado."); NA_integer_
+      warning("'", SWB_VAR, "' not found."); NA_integer_
     },
 
-    # NUEVA: couple = 1 if m36 < 4 (estimation.do línea 52)
+    # couple = 1 if m36 < 4
     couple = if (COUPLE_VAR %in% names(.)) {
       code_couple(.data[[COUPLE_VAR]])
     } else {
-      warning("'", COUPLE_VAR, "' no encontrado."); NA_integer_
+      warning("'", COUPLE_VAR, "' not found."); NA_integer_
     },
 
-    # NUEVA: t02_01 (confianza institucional — control en modelos Stata)
+    # tinst: institutional trust (raw; control in Stata models)
     tinst = if (TINST_VAR %in% names(.)) {
       code_tinst(.data[[TINST_VAR]])
     } else {
-      warning("'", TINST_VAR, "' no encontrado."); NA_real_
+      warning("'", TINST_VAR, "' not found."); NA_real_
     }
   )
 
-# ==============================================================================
-# 6. Variables derivadas de membresía
-# ==============================================================================
+# ── 6. Derived membership variables ───────────────────────────────────────
 dt <- dt %>%
   dplyr::rowwise() %>%
   dplyr::mutate(
@@ -191,30 +159,25 @@ dt <- dt %>%
   ) %>%
   dplyr::ungroup()
 
-# ==============================================================================
-# 7. BALANCEO DEL PANEL — replicando lógica Stata
-#
-#   Stata (estimation.do líneas 76-87):
-#     (a) Probit con todos los controles → gen in_model = e(sample)
-#         → equivale a: obs con NO-missing en TODAS las variables del modelo
-#     (b) keep n_group == 3 (solo ids con 3 olas)
-# ==============================================================================
+# ── 7. Panel balancing ───────────────────────────────────────────────────────────────
+# (a) complete.cases() on model variables (equiv. probit e(sample))
+# (b) keep only ids with exactly 3 waves
 
-# Paso (a): variables que Stata usa para definir la muestra analítica
+# Step (a): variables used by Stata to define the analytic sample
 stata_model_vars <- c("trust","swb","employed","couple","tinst","woman","edad")
 stata_model_vars <- intersect(stata_model_vars, names(dt))
 stata_model_vars <- stata_model_vars[sapply(stata_model_vars,
                     function(v) any(!is.na(dt[[v]])))]
 
-# Obs con complete data en todas las variables del modelo
+# Observations with complete data on all model variables
 complete_mask <- complete.cases(dt[, stata_model_vars])
 dt$in_model   <- complete_mask
 
-message("Paso (a) — complete cases en vars. del modelo: ",
+message("Step (a) -- complete cases on model vars: ",
         sum(complete_mask), " de ", nrow(dt), " obs (",
         round(mean(complete_mask)*100, 1), "%)")
 
-# Paso (b): ids con exactamente 3 olas (después de filtrar complete cases)
+# Step (b): keep only ids observed in all 3 waves
 panel_counts <- dt %>%
   dplyr::filter(in_model) %>%
   dplyr::count(id)
@@ -225,12 +188,10 @@ dt$in_balanced <- dt$id %in% balanced_ids & dt$in_model
 
 n_balanced <- length(balanced_ids)
 n_total    <- length(unique(dt$id))
-message("Paso (b) — Panel balanceado: n = ", n_balanced, " individuos (",
-        round(n_balanced / n_total * 100, 1), "% de retención)")
+message("Step (b) -- Balanced panel: n = ", n_balanced, " individuals (",
+        round(n_balanced / n_total * 100, 1), "% retention)")
 
-# ==============================================================================
-# 8. Estadísticas descriptivas
-# ==============================================================================
+# ── 8. Descriptive statistics ──────────────────────────────────────────────
 summary_fun <- function(d) {
   d %>%
     dplyr::group_by(ola) %>%
@@ -259,12 +220,10 @@ stats_full     <- dt %>% summary_fun()
 readr::write_csv(stats_balanced, here::here("output", "summary_stats_balanced.csv"))
 readr::write_csv(stats_full,     here::here("output", "summary_stats_full.csv"))
 
-cat("\n--- Estadísticas (panel balanceado) ---\n")
+cat("\n--- Summary statistics (balanced panel) ---\n")
 print(stats_balanced)
 
-# ==============================================================================
-# 9. Membresía por dominio y ola
-# ==============================================================================
+# ── 9. Membership by domain and wave ───────────────────────────────────────
 domain_tbl <- dt %>%
   dplyr::filter(in_balanced) %>%
   dplyr::group_by(ola) %>%
@@ -279,28 +238,24 @@ domain_tbl <- dt %>%
 
 readr::write_csv(domain_tbl, here::here("output", "membership_by_domain.csv"))
 
-# ==============================================================================
-# 10. Verificación de distribuciones (diagnósticos)
-# ==============================================================================
-cat("\n--- DIAGNÓSTICO: Trust generalizada (c02) en panel balanceado, ola 1 ---\n")
+# ── 10. Distribution checks ─────────────────────────────────────────────────
+cat("\n--- Check: Generalized trust (c02), balanced panel, wave 1 ---\n")
 dt %>% dplyr::filter(in_balanced, ola == 1) %>%
   dplyr::count(.data[[TRUST_GEN_VAR]], trust) %>% print()
 
-cat("\n--- DIAGNÓSTICO: Trust vecinal (", TRUST_NH_VAR, ") en panel balanceado, ola 1 ---\n")
+cat("\n--- Check: Neighbourhood trust (", TRUST_NH_VAR, "), balanced panel, wave 1 ---\n")
 dt %>% dplyr::filter(in_balanced, ola == 1) %>%
   dplyr::count(.data[[TRUST_NH_VAR]], trust_nh) %>% print()
 
-cat("\n--- DIAGNÓSTICO: swb en panel balanceado, ola 1 ---\n")
+cat("\n--- Check: swb, balanced panel, wave 1 ---\n")
 dt %>% dplyr::filter(in_balanced, ola == 1) %>%
   dplyr::count(.data[[SWB_VAR]], swb) %>% print()
 
-cat("\n--- DIAGNÓSTICO: Membresía (", MEMBER_CODE_LOGIC, ") ola 1 ---\n")
-cat("Proporción con >= 1 membresía:",
+cat("\n--- Check: Membership (", MEMBER_CODE_LOGIC, "), wave 1 ---\n")
+cat("Share with >= 1 membership:",
     round(mean(dt$membership_count[dt$in_balanced & dt$ola==1] > 0, na.rm=TRUE), 3), "\n")
 
-# ==============================================================================
-# 11. Guardar dataset listo para análisis
-# ==============================================================================
+# ── 11. Save analysis dataset ──────────────────────────────────────────────
 dt_analysis <- dt %>%
   dplyr::filter(in_balanced) %>%
   dplyr::select(
@@ -311,10 +266,10 @@ dt_analysis <- dt %>%
   )
 
 saveRDS(dt_analysis, here::here("data", "dt_analysis.rds"))
-message("\n[01_descriptive_stats.R] Listo.")
-message("  Panel balanceado: n = ", length(balanced_ids),
-        " individuos | ", nrow(dt_analysis), " obs person-wave")
+message("\n[01_descriptive_stats.R] done.")
+message("  Balanced panel: n = ", length(balanced_ids),
+        " individuals | ", nrow(dt_analysis), " person-wave obs")
 message("  Saved: data/dt_analysis.rds")
-message("\n  RECORDATORIO: Si trust_nh da 0% o 100%, verificar que t01 existe en el dataset.")
-message("  RECORDATORIO: Si employed es todo NA, verificar que m02 existe.")
-message("  RECORDATORIO: MEMBER_CODE_LOGIC = '", MEMBER_CODE_LOGIC, "'")
+message("  If trust_nh is 0% or 100%, check that t01 exists in the dataset.")
+message("  If employed is all NA, check that m02 exists.")
+message("  MEMBER_CODE_LOGIC = '", MEMBER_CODE_LOGIC, "'")

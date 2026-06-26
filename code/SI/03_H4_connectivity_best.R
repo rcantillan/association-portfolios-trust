@@ -1,6 +1,4 @@
-# ==============================================================================
-# 03_H4_connectivity_figures_themeSSR.R — H4 figures (ROBUST + BOOTSTRAP CI)
-# ------------------------------------------------------------------------------
+# ── 03_H4_connectivity_figures_themeSSR.R — H4 figures (ROBUST + BOOTSTRAP CI) ──
 # No weights. X axis shows only existing years (2016, 2018, 2022).
 # Adds bootstrap 95% CIs (cluster bootstrap by individual id) for:
 #   - prev_gamma_soft   (mean posterior p_gamma)
@@ -19,7 +17,6 @@
 #   data/dt_states_cov_FIXED.rds OR data/dt_states_cov.rds OR data/dt_states.rds
 #   data/posterior_probs_cov_std.rds (only if posteriors need rebuild)
 #   data/dt_analysis.rds (only if domain vars missing in dt_states)
-# ==============================================================================
 
 source(here::here("code","00_setup.R"))
 
@@ -43,9 +40,7 @@ log_line <- function(...) {
   write(txt, file = LOG_PATH, append = TRUE)
 }
 
-# ------------------------------------------------------------------------------
 # 1) Load dt_states (prefer FIXED > cov > nocov)
-# ------------------------------------------------------------------------------
 path_fixed <- here::here("data","dt_states_cov_FIXED.rds")
 path_cov   <- here::here("data","dt_states_cov.rds")
 path_noc   <- here::here("data","dt_states.rds")
@@ -64,9 +59,7 @@ if (file.exists(path_fixed)) {
 }
 dt <- as.data.table(dt)
 
-# ------------------------------------------------------------------------------
 # 2) Standardize keys (id as character; ola numeric)
-# ------------------------------------------------------------------------------
 if (!("id" %in% names(dt)) && ("idencuesta" %in% names(dt))) setnames(dt, "idencuesta", "id")
 if (!("ola" %in% names(dt))) stop("Missing 'ola' column in dt_states.")
 dt[, id := as.character(id)]
@@ -76,9 +69,7 @@ dt[, wave := ola]
 if ("position" %in% names(dt))        dt[, position := as.character(position)]
 if ("position_strict" %in% names(dt)) dt[, position_strict := as.character(position_strict)]
 
-# ------------------------------------------------------------------------------
 # 3) Ensure domain vars exist (merge from dt_analysis if needed)
-# ------------------------------------------------------------------------------
 domains_named <- unique(c(DOMAIN_VARS, "otra"))
 domains_c12   <- paste0("c12_", sprintf("%02d", 1:9))
 
@@ -119,9 +110,7 @@ if (all(DOMAIN_VARS %in% names(dt))) {
   stop("Could not detect domain variables after merge attempts.")
 }
 
-# ------------------------------------------------------------------------------
 # 4) Posterior validation
-# ------------------------------------------------------------------------------
 posteriors_ok <- function(DT, tol = 1e-6) {
   if (!all(c("p_alpha","p_beta","p_gamma") %in% names(DT))) return(FALSE)
 
@@ -138,9 +127,7 @@ posteriors_ok <- function(DT, tol = 1e-6) {
   is.finite(md) && md <= tol
 }
 
-# ------------------------------------------------------------------------------
 # 5) Rebuild posteriors if invalid/missing (and SAVE FIXED)
-# ------------------------------------------------------------------------------
 if (!posteriors_ok(dt)) {
   log_line("Posteriors missing/invalid in dt_states. Rebuilding from V_std...")
 
@@ -232,9 +219,7 @@ if (!("position_strict" %in% names(dt))) {
   dt[p_max < THRESH_STRICT, position_strict := NA_character_]
 }
 
-# ------------------------------------------------------------------------------
 # 6) Map wave -> year (and keep only existing years on x axis)
-# ------------------------------------------------------------------------------
 # Your pipeline uses ola recoded to 1,2,3 OR raw 1,3,6. Support both.
 dt[, year := fifelse(ola %in% c(1L,2L,3L), WAVES_YEARS[ola],
                      fifelse(ola == 1L, WAVES_YEARS[1],
@@ -245,9 +230,7 @@ years_present <- sort(unique(dt$year[!is.na(dt$year)]))
 if (length(years_present) < 2) stop("Could not map waves to years. Check ola coding.")
 log_line("Years present: ", paste(years_present, collapse=", "))
 
-# ------------------------------------------------------------------------------
 # 7) H4 metric computation
-# ------------------------------------------------------------------------------
 mean_pairwise_jaccard <- function(X) {
   P <- crossprod(X)
   diagv <- diag(P)
@@ -289,9 +272,7 @@ h4_point <- compute_h4_by_year(dt)
 write_csv(as.data.frame(h4_point), here::here("output","H4_connectivity_by_wave_jaccard.csv"))
 log_line("Saved: output/H4_connectivity_by_wave_jaccard.csv")
 
-# ------------------------------------------------------------------------------
 # 8) Bootstrap 95% CI (cluster bootstrap by id, within year)
-# ------------------------------------------------------------------------------
 set.seed(123)
 B <- 500  # increase to 1000 if you want smoother intervals
 
@@ -328,9 +309,7 @@ setorder(h4, year)
 write_csv(as.data.frame(h4), here::here("output","H4_connectivity_by_wave_bootstrap.csv"))
 log_line("Saved: output/H4_connectivity_by_wave_bootstrap.csv (B=", B, ")")
 
-# ------------------------------------------------------------------------------
 # 9) Plot helpers: fixed x ticks and honest y scaling
-# ------------------------------------------------------------------------------
 THEME <- theme_ssr()
 
 x_scale_years <- scale_x_continuous(breaks = years_present, labels = years_present)
@@ -351,9 +330,7 @@ scale_jacc0 <- function() {
   )
 }
 
-# ------------------------------------------------------------------------------
 # 10) Figures (with 95% CI error bars)
-# ------------------------------------------------------------------------------
 p_gamma_soft <- ggplot(h4, aes(x = year, y = prev_gamma_soft, group = 1)) +
   geom_line(linewidth = 0.9) +
   geom_point(size = 2.8) +
@@ -396,9 +373,7 @@ p_panel <- (p_gamma_soft | p_twoplus) / (p_gamma_strict | p_jacc) +
     theme = THEME
   )
 
-# ------------------------------------------------------------------------------
 # 11) Save
-# ------------------------------------------------------------------------------
 ggsave_safe("H4_prev_gamma_soft.png",   p_gamma_soft,   width = 7.2, height = 4.6)
 ggsave_safe("H4_p_two_plus.png",        p_twoplus,      width = 7.2, height = 4.6)
 ggsave_safe("H4_prev_gamma_strict.png", p_gamma_strict, width = 7.2, height = 4.6)

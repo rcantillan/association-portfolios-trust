@@ -1,6 +1,4 @@
-# ==============================================================================
-# run_all.R — Master script (one-command replication)
-# ==============================================================================
+# ── run_all.R — Master script (one-command replication) ──────────────────────
 # Structure:
 #   code/00_setup.R       — shared configuration (MEMBER_CODE_LOGIC, STATE_MAP, etc.)
 #   code/main/            — main manuscript analysis
@@ -9,13 +7,10 @@
 # Usage:
 #   Rscript code/run_all.R          # full replication
 #   source("code/run_all.R")        # from R console at project root
-# ==============================================================================
 
 source(here::here("code", "00_setup.R"))
 
-# ==============================================================================
-# MAIN ANALYSIS
-# ==============================================================================
+# ── Main analysis ─────────────────────────────────────────────────────────────
 
 message("\n[1/4] Descriptive statistics...")
 source(here::here("code", "main", "01_descriptive_stats.R"))
@@ -29,9 +24,7 @@ source(here::here("code", "main", "03_trust_models.R"))
 message("\n[4/4] Main figures...")
 source(here::here("code", "main", "06_figures_plots.R"))
 
-# ==============================================================================
-# SUPPLEMENTARY INFORMATION
-# ==============================================================================
+# ── Supplementary information ─────────────────────────────────────────────────
 
 message("\n[SI-1] H3: Structural precarity / exit from gamma...")
 source(here::here("code", "SI", "03b_precarity_transitions_SES.R"))
