@@ -1,18 +1,11 @@
-# ==============================================================================
-# 04_selection_tests_best.R — Selection & temporal falsification (SSR block)
-# ------------------------------------------------------------------------------
-# Best version uses posterior uncertainty:
-#  - Soft state: p_gamma (0..1)
-#  - Soft entry: d_p_gamma = p_gamma(t+1) - p_gamma(t)
-#  - Hard entry: enter_gamma_hard = I(position != gamma & next == gamma)
-# Tests:
-#  (i) baseline trust -> entry to gamma (soft + hard)
-#  (ii) entry to gamma -> change in trust (Δtrust)
-#  (iii) placebo lead: gamma_next predicts trust_t controlling gamma_now
+# ── 04_selection_tests_best.R — Selection and temporal falsification ──────────
+# Uses posterior uncertainty (soft/hard):
+#   (i)   Baseline trust -> entry to gamma (soft + hard)
+#   (ii)  Entry to gamma -> change in trust (d_trust)
+#   (iii) Placebo lead: gamma_next predicts trust_t controlling gamma_now
 # Outputs:
-#  - selection_tests_table.tex (compact)
-#  - CSV with key coefficients
-# ==============================================================================
+#   output/selection_tests_table.tex
+#   output/selection_tests_keycoef.csv
 
 source(here::here("code","00_setup.R"))
 suppressPackageStartupMessages({
@@ -51,7 +44,7 @@ tr[, gamma_next_hard  := as.integer(pos_next  == "gamma")]
 tr[, d_trust    := trust_next - trust]
 tr[, d_trust_nh := trust_nh_next - trust_nh]
 
-# ---- Controls ----
+# ── Controls ──────────────────────────────────────────────────────────────────
 # employment is often NA in your pipeline; we include only if it has variation.
 ctrl <- c("edad","woman","education")
 if ("employment" %in% names(tr) && any(!is.na(tr$employment)) && length(unique(na.omit(tr$employment))) > 1) {
@@ -87,7 +80,7 @@ m3_soft <- feglm(f3_soft, data = tr, family = "binomial", cluster = "id")
 f3_hard <- as.formula(paste0("trust ~ gamma_next_hard + gamma_now_hard + factor(ola) + ", ctrl_str))
 m3_hard <- feglm(f3_hard, data = tr, family = "binomial", cluster = "id")
 
-# ---- Export table (compact SSR) ----
+# ── Export table ──────────────────────────────────────────────────────────────
 dir.create(here::here("output"), showWarnings = FALSE, recursive = TRUE)
 
 etable(
@@ -102,7 +95,7 @@ etable(
   replace = TRUE
 )
 
-# ---- Export key coefficients to CSV (for writing Results quickly) ----
+# ── Export key coefficients to CSV ───────────────────────────────────────────
 grab <- function(model, term){
   co <- coef(model)
   se <- se(model)

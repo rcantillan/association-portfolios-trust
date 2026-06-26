@@ -1,6 +1,4 @@
-# ==============================================================================
-# 03c_active_only_sensitivity.R — Sensitivity S7: Active-Only membership coding
-# ------------------------------------------------------------------------------
+# ── 03c_active_only_sensitivity.R — Sensitivity S7: Active-Only membership coding 
 # Runs key trust models using dt_states_cov_active_only.rds
 # (LMM estimated with MEMBER_CODE_LOGIC = "active_only", c12 == 3 only)
 #
@@ -11,7 +9,6 @@
 #   output/SI_S7_active_only_ames.csv     — AMEs under active-only coding
 #   output/SI_S7_lmm_comparison.csv       — LMM fit comparison: any vs active
 #   output/SI_S7_profiles_comparison.csv  — Profile comparison table
-# ==============================================================================
 
 options(marginaleffects_safe = FALSE)
 source(here::here("code", "00_setup.R"))
@@ -24,9 +21,7 @@ suppressPackageStartupMessages({
 
 NAGQ <- 9L   # faster for sensitivity; main paper uses 12
 
-# ==============================================================================
-# 1. LOAD DATA
-# ==============================================================================
+# ── 1. LOAD DATA ───────────────────────────────────────────────────────────
 stop_if_missing(c(
   here::here("data", "dt_states_cov_active_only.rds"),
   here::here("data", "dt_analysis.rds")
@@ -65,9 +60,7 @@ dt <- left_join(
 message("N total: ", nrow(dt))
 message("N con clase no-NA: ", sum(!is.na(dt$clase)))
 
-# ==============================================================================
-# 2. KEY TRUST MODELS (replicating Table 4 specs M1 and M2)
-# ==============================================================================
+# ── 2. KEY TRUST MODELS (replicating Table 4 specs M1 and M2) ──────────────
 
 CONTROLS_TRUST <- c("edad", "woman", "education", "swb", "employed", "couple", "tinst")
 ctrl_use <- CONTROLS_TRUST[
@@ -140,9 +133,7 @@ readr::write_csv(ame_ao, here::here("output", "SI_S7_active_only_ames.csv"))
 cat("\n=== Active-only AMEs ===\n")
 print(ame_ao %>% select(spec, outcome, contrast, estimate, std.error, p.value, sig), n = 40)
 
-# ==============================================================================
-# 3. LMM FIT COMPARISON TABLE
-# ==============================================================================
+# ── 3. LMM FIT COMPARISON TABLE ────────────────────────────────────────────
 
 fit_ao   <- readr::read_csv(here::here("output", "fit_table_cov_active_only.csv"),
                              show_col_types = FALSE)
@@ -169,9 +160,7 @@ readr::write_csv(lmm_comp, here::here("output", "SI_S7_lmm_comparison.csv"))
 cat("\n=== LMM Fit Comparison ===\n")
 print(lmm_comp)
 
-# ==============================================================================
-# 4. PROFILE COMPARISON TABLE
-# ==============================================================================
+# ── 4. PROFILE COMPARISON TABLE ────────────────────────────────────────────
 
 prof_ao   <- readr::read_csv(here::here("output", "latent_profiles_cov_K3_active_only.csv"),
                               show_col_types = FALSE)
@@ -199,9 +188,7 @@ print(head(prof_main, 4))
 
 readr::write_csv(prof_ao_long, here::here("output", "SI_S7_profiles_comparison.csv"))
 
-# ==============================================================================
-# 5. SUMMARY
-# ==============================================================================
+# ── 5. SUMMARY ─────────────────────────────────────────────────────────────
 
 cat("\n", strrep("=", 65), "\n")
 cat("[03c_active_only_sensitivity.R] DONE\n\n")
