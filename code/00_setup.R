@@ -218,70 +218,42 @@ STATE_MAP <- tibble::tibble(
 POSITION_TO_CLASE <- setNames(STATE_MAP$clase, STATE_MAP$position)
 CLASE_TO_LABEL    <- setNames(STATE_MAP$label_long, as.character(STATE_MAP$clase))
 
-# ── Color palette — ggsci NPG (Nature Publishing Group) ────────
-# Full NPG hex: #E64B35 #4DBBD5 #00A087 #3C5488 #F39B7F #8491B4 #91D1C2
+# ── Color palette ─────────────────────────────────────────────
 STATE_PALETTE <- c(
-  "\u03b1 (Isolate/Apathetic)"  = "#3C5488",   # dark navy   — withdrawn / low engagement
-  "\u03b2 (Closed/Clustering)"  = "#4DBBD5",   # bright teal — focused cluster membership
-  "\u03b3 (Bridging/Broker)"    = "#E64B35"    # warm red    — diverse cross-domain bridging
+  "\u03b1 (Isolate/Apathetic)"  = "#59A14F",
+  "\u03b2 (Closed/Clustering)"  = "#4E79A7",
+  "\u03b3 (Bridging/Broker)"    = "#E15759"
 )
 
 # Alias for scripts that use the shorter Greek label form
 STATE_PALETTE_LEGACY <- c(
-  "α (isolation)"  = "#3C5488",
-  "β (clustering)" = "#4DBBD5",
-  "γ (bridging)"   = "#E64B35"
-)
-
-# Wave / time-point colors (NPG, light → dark = early → late)
-WAVE_PALETTE <- c(
-  "2016" = "#91D1C2",   # mint  (lightest)
-  "2018" = "#4DBBD5",   # teal
-  "2022" = "#3C5488"    # dark navy (darkest)
+  "α (isolation)"  = "#59A14F",
+  "β (clustering)" = "#4E79A7",
+  "γ (bridging)"   = "#E15759"
 )
 
 STATE_LEVELS <- names(STATE_PALETTE)
 
 # Labels for figures (keyed by numeric clase as character)
 STATE_LABELS_FIG <- setNames(STATE_MAP$label_long, as.character(STATE_MAP$clase))
-# Result: c("3"="\u03b1...", "1"="\u03b2...", "2"="\u03b3...")
+# Resultado: c("3"="\u03b1...", "1"="\u03b2...", "2"="\u03b3...")
 
-# ── Plot themes (unified minimal style) ───────────────────────
-theme_ssr <- function(base_size = 12, base_family = "sans") {
+# ── Plot themes ────────────────────────────────────────────────────────────────────────────────
+theme_ssr <- function(base_size = 13, base_family = "sans") {
   ggplot2::theme_minimal(base_size = base_size, base_family = base_family) +
     ggplot2::theme(
-      # Grid: horizontal only, very subtle
       panel.grid.minor   = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_blank(),
-      panel.grid.major.y = ggplot2::element_line(color = "grey92", linewidth = 0.35),
-      # Axes
-      axis.title         = ggplot2::element_text(size = base_size * 0.92, color = "grey25"),
-      axis.text          = ggplot2::element_text(size = base_size * 0.88, color = "grey30"),
-      axis.ticks         = ggplot2::element_line(color = "grey80", linewidth = 0.3),
-      axis.ticks.length  = ggplot2::unit(2.5, "pt"),
-      # Facet strips — plain text, no background
-      strip.text         = ggplot2::element_text(size = base_size * 0.95, color = "grey20",
-                                                  margin = ggplot2::margin(b = 4)),
-      strip.background   = ggplot2::element_blank(),
-      # Legend
+      axis.title         = ggplot2::element_text(face = "bold"),
+      plot.title         = ggplot2::element_text(face = "bold"),
       legend.title       = ggplot2::element_blank(),
-      legend.text        = ggplot2::element_text(size = base_size * 0.88, color = "grey20"),
-      legend.position    = "top",
-      legend.key.size    = ggplot2::unit(0.85, "lines"),
-      legend.spacing.x   = ggplot2::unit(4, "pt"),
-      # Panel border — consistent across all figures
-      panel.border       = ggplot2::element_rect(color = "black", fill = NA,
-                                                  linewidth = 0.65),
-      # No titles or captions in any figure
-      plot.title         = ggplot2::element_blank(),
-      plot.subtitle      = ggplot2::element_blank(),
-      plot.caption       = ggplot2::element_blank(),
-      plot.margin        = ggplot2::margin(8, 12, 6, 8)
+      legend.position    = "top"
     )
 }
 
-theme_ssr_big <- function(base_size = 14, base_family = "sans") {
-  theme_ssr(base_size = base_size, base_family = base_family)
+theme_ssr_big <- function(base_size = 16, base_family = "sans") {
+  theme_ssr(base_size = base_size, base_family = base_family) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size))
 }
 
 # ── Startup summary ────────────────────────────────────────────────────────────────────────

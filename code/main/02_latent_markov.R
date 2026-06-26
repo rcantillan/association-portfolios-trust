@@ -576,10 +576,11 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
   library(scales)
+  library(grid)
   library(glue)
 })
 
-# Domain labels
+# Domain labels for figure
 domain_order_fig <- c("c12_01","c12_02","c12_03","c12_04",
                        "c12_05","c12_06","c12_07","c12_08")
 
@@ -594,22 +595,20 @@ domain_labels_fig <- c(
   c12_08 = "Student orgs."
 )
 
-# State key — NPG colors (match STATE_PALETTE_LEGACY from 00_setup.R)
+# State key: maps section-7 indices to labels and colors
 state_key_fig <- tibble(
-  state_idx  = c(alpha_state,  beta_state,       gamma_state),
+  state_idx  = c(alpha_state,   beta_state,      gamma_state),
   state_col  = paste0("State_", c(alpha_state, beta_state, gamma_state)),
   state_long = c("\u03b1 (isolation)",
                  "\u03b2 (clustering)",
                  "\u03b3 (bridging)"),
-  col        = c("#3C5488",   # dark navy   — α isolation
-                 "#4DBBD5",   # bright teal — β clustering
-                 "#E64B35")   # warm red    — γ bridging
+  col        = c("#4E79A7", "#59A14F", "#E15759")
 )
 
 state_pal_fig  <- setNames(state_key_fig$col, state_key_fig$state_long)
 state_lvls_fig <- state_key_fig$state_long
 
-# Prevalence from dt_states — used in facet strip labels
+# Prevalence from dt_states (used for strip subtitles)
 prev_tbl <- tryCatch({
   readRDS(here::here("data","dt_states_cov.rds")) %>%
     count(position) %>%
@@ -631,13 +630,12 @@ make_strip_label <- function(sl) {
   }
   sl
 }
-
 state_labels_fig <- setNames(
   sapply(state_lvls_fig, make_strip_label),
   state_lvls_fig
 )
 
-# Reshape to long format
+# Reshape prob1 to long for plotting
 prob_long_fig <- as.data.frame(prob1) %>%
   setNames(paste0("State_", seq_len(ncol(prob1)))) %>%
   mutate(item = rownames(prob1)) %>%
@@ -651,36 +649,36 @@ prob_long_fig <- as.data.frame(prob1) %>%
       recode(item, !!!domain_labels_fig),
       levels = rev(recode(domain_order_fig, !!!domain_labels_fig))
     ),
-    prob_label = percent(prob, accuracy = 1)
+    prob_label = if_else(prob >= 0.15,
+                         percent(prob, accuracy = 1),
+                         NA_character_)
   )
 
-# ── Plot ─────────────────────────────────────────────────────────────────────
+# Plot
 p_profiles_fig <- ggplot(prob_long_fig,
-                         aes(x = item_lab, y = prob, color = state_long)) +
+                         aes(x = item_lab, y = prob,
+                             color = state_long, fill = state_long)) +
+
+  # Subtle bar fill behind lollipop (same color, very transparent)
+  #geom_col(width = 0.55, alpha = 0.08, show.legend = FALSE) +
 
   # Lollipop stem
   geom_segment(aes(xend = item_lab, y = 0, yend = prob),
-               color     = "grey82",
-               linewidth = 0.55,
-               lineend   = "round",
-               show.legend = FALSE) +
+             linewidth = 0.5,      # ← antes era 1.1
+             alpha = 0.70,
+             lineend = "round", show.legend = FALSE) +
+
+  # Reference dashed line at 50%
+  geom_hline(yintercept = 0.50, linetype = "22",
+             color = "grey55", linewidth = 0.5) +
 
   # Dot
-  geom_point(size = 4.0, show.legend = FALSE) +
+  geom_point(size = 4.5, alpha = 0.95, show.legend = FALSE) +
 
-  # Percentage label to the right of dot
-  geom_text(aes(label = prob_label),
-            hjust  = -0.55,
-            size   = 3.0,
-            color  = "grey35",
-            family = "sans",
-            show.legend = FALSE) +
-
-  # 50% reference line (shown after coord_flip as vertical)
-  geom_hline(yintercept = 0.50,
-             linetype   = "22",
-             color      = "grey70",
-             linewidth  = 0.4) +
+  # Percentage label above dot (only for prob >= 15%)
+  geom_text(aes(label = prob_label, y = prob + 0.065),
+            size = 2.9, fontface = "bold",
+            na.rm = TRUE, show.legend = FALSE) +
 
   coord_flip() +
 
@@ -688,195 +686,82 @@ p_profiles_fig <- ggplot(prob_long_fig,
              labeller = labeller(state_long = state_labels_fig)) +
 
   scale_color_manual(values = state_pal_fig) +
+  scale_fill_manual( values = state_pal_fig) +
+
   scale_y_continuous(
-    limits = c(0, 1.10),
+    limits = c(0, 1),
     breaks = c(0, .25, .50, .75, 1.0),
     labels = percent_format(accuracy = 1),
-    expand = c(0, 0)
+    expand = expansion(mult = c(0.01, 0.10))
   ) +
 
-  labs(x = NULL, y = "Pr(member\u202f|\u202fstate)") +
+  labs(
+    x = NULL,
+    y = "Pr(member\u202f|\u202fstate)",
+    caption = paste0(
+      "Item-response probabilities from Latent Markov Model (K\u2009=\u2009",
+      K_BASELINE, "; ELSOC balanced panel 2016\u20132022). ",
+      "Labels shown for Pr\u202f\u2265\u202f15%. Dashed line at 50%.\n",
+      "Strip brackets show pooled position prevalence. ",
+      "\u03b1\u202f=\u202fisolation, \u03b2\u202f=\u202fclustering, \u03b3\u202f=\u202fbridging."
+    )
+  ) +
 
-  theme_ssr(base_size = 12) +
+  theme_minimal(base_size = 12, base_family = "sans") +
   theme(
-    strip.text         = element_text(size = 12, color = "grey15"),
-    strip.background   = element_blank(),
+    strip.text         = element_text(face = "bold", size = 12.5,
+                                      color = "white",
+                                      margin = margin(t = 7, b = 7)),
+    strip.background   = element_rect(color = NA, fill = "grey30"),
     panel.grid.major.y = element_blank(),
-    panel.grid.major.x = element_line(color = "grey92", linewidth = 0.35),
-    panel.spacing      = unit(1.1, "lines"),
-    axis.text.y        = element_text(size = 11, color = "grey20"),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(color = "grey92", linewidth = 0.4),
+    panel.spacing      = unit(1.2, "lines"),
+    axis.text.y        = element_text(size = 11, color = "grey15"),
     axis.text.x        = element_text(size = 10, color = "grey30"),
-    axis.title.x       = element_text(size = 11, color = "grey25",
-                                      margin = margin(t = 8)),
-    plot.margin        = margin(t = 10, r = 24, b = 8, l = 10)
+    axis.title.x       = element_text(face = "bold", size = 12,
+                                      margin = margin(t = 10)),
+    plot.caption       = element_text(size = 8, color = "grey50",
+                                      hjust = 0, lineheight = 1.3,
+                                      margin = margin(t = 12)),
+    plot.margin        = margin(t = 10, r = 22, b = 10, l = 10)
   )
 
-# Save (plain ggsave — no gtable hack needed)
-ggsave(here::here("output", "fig_profiles_clean.png"),
-       p_profiles_fig, width = 7.0, height = 10.0, dpi = 300)
-ggsave(here::here("output", "fig_profiles_clean.pdf"),
-       p_profiles_fig, width = 7.0, height = 10.0)
+# Colour strip backgrounds to match state palette
+gt_profiles <- tryCatch({
+  gb <- ggplot_build(p_profiles_fig)
+  gt <- ggplot_gtable(gb)
+  strip_idx <- which(grepl("^strip", gt$layout$name))
 
-message("  Figure 1 saved: output/fig_profiles_clean.png/.pdf")
-
-# ── Figure 2 — Transition network ────────────────────────────────────────────
-# Uses Pi_reord (rows/cols ordered α, β, γ; named "alpha","beta","gamma").
-
-suppressPackageStartupMessages({
-  library(ggforce)
+  for (si in strip_idx) {
+    # Extract text label from strip grob tree
+    strip_label <- tryCatch(
+      gt$grobs[[si]]$grobs[[1]]$children[[2]]$children[[1]]$label,
+      error = function(e) ""
+    )
+    # Match by checking which state_lvl is a prefix of the strip label
+    matched <- state_lvls_fig[
+      sapply(state_lvls_fig, function(s) startsWith(strip_label, s))
+    ]
+    if (length(matched) == 1) {
+      gt$grobs[[si]]$grobs[[1]]$children[[1]]$gp$fill <- state_pal_fig[[matched]]
+    }
+  }
+  gt
+}, error = function(e) {
+  message("  Strip color override failed: ", conditionMessage(e))
+  ggplot_gtable(ggplot_build(p_profiles_fig))
 })
 
-# ── Knobs ──────────────────────────────────────────────────────────────────
-CURV_OUT <- 1.25;  CURV_IN  <- 0.65
-LAB_T    <- 0.55;  LAB_NOFF <- 0.06
-AR_T0    <- 0.90;  AR_T1    <- 0.995
-ARROW_SZ <- unit(6, "mm")
-LOOP_R   <- 0.30;  NODE_R   <- LOOP_R
-LOOP_ANG <- c("α" = 110, "β" = 160, "γ" = 20)
-W_MIN <- 0.4; W_MAX <- 7.0; W_POW <- 0.70
-A_MIN <- 0.20; A_MAX <- 0.95
-fmt3 <- function(x) sprintf("%.3f", x)
+# Save
+png(here::here("output", "fig_profiles_clean.png"),
+    width = 7.0, height = 10.0, units = "in", res = 300)
+grid::grid.draw(gt_profiles)
+dev.off()
 
-# NPG colors (match STATE_PALETTE_LEGACY)
-net_states  <- c("α", "β", "γ")
-net_levels  <- c("α (isolation)", "β (clustering)", "γ (bridging)")
-net_palette <- c("α (isolation)" = "#3C5488",
-                 "β (clustering)" = "#4DBBD5",
-                 "γ (bridging)"   = "#E64B35")
+pdf(here::here("output", "fig_profiles_clean.pdf"),
+    width = 7.0, height = 10.0)
+grid::grid.draw(gt_profiles)
+dev.off()
 
-nodes_net <- tibble::tibble(
-  name       = net_states,
-  state_long = net_levels,
-  x = c(0, -2, 2),
-  y = c(2,  0, 0)
-)
-
-# Extract 9 transitions from Pi_reord (α=row1, β=row2, γ=row3)
-edges_net <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
-  as_tibble() %>%
-  dplyr::mutate(
-    p       = as.numeric(Pi_reord[cbind(from_i, to_i)]),
-    p       = dplyr::if_else(is.na(p), 0, p),
-    from    = net_states[from_i],
-    to      = net_states[to_i],
-    is_loop = (from_i == to_i),
-    label   = fmt3(p),
-    lw      = W_MIN + (W_MAX - W_MIN) * (p ^ W_POW),
-    a       = pmin(A_MAX, pmax(A_MIN, p))
-  )
-
-stopifnot(nrow(edges_net) == 9)
-
-E_net <- edges_net %>%
-  dplyr::left_join(nodes_net %>% dplyr::select(name, x, y), by = c("from" = "name")) %>%
-  dplyr::rename(x1 = x, y1 = y) %>%
-  dplyr::left_join(nodes_net %>% dplyr::select(name, x, y), by = c("to" = "name")) %>%
-  dplyr::rename(x2 = x, y2 = y) %>%
-  dplyr::mutate(
-    dx = x2 - x1, dy = y2 - y1,
-    denom = pmax(1e-9, sqrt(dx^2 + dy^2)),
-    nx = -dy / denom, ny = dx / denom,
-    pair      = paste0(pmin(from_i, to_i), pmax(from_i, to_i)),
-    dir       = dplyr::if_else(from_i < to_i, 1, dplyr::if_else(from_i > to_i, -1, 0)),
-    pair_side = dplyr::case_when(pair=="12" ~ -1, pair=="13" ~ 1,
-                                  pair=="23" ~ -1, TRUE ~ 1),
-    curv_sign = dir * pair_side,
-    curv_mag  = dplyr::if_else(curv_sign == 1, CURV_OUT, CURV_IN)
-  )
-
-E_nl <- E_net %>%
-  dplyr::filter(!is_loop) %>%
-  dplyr::mutate(
-    ux = dx / denom, uy = dy / denom,
-    xs = x1 + NODE_R * ux, ys = y1 + NODE_R * uy,
-    xe = x2 - NODE_R * ux, ye = y2 - NODE_R * uy,
-    mx2 = (xs + xe) / 2,   my2 = (ys + ye) / 2,
-    cx  = mx2 + curv_sign * curv_mag * nx,
-    cy  = my2 + curv_sign * curv_mag * ny,
-    gid = dplyr::row_number()
-  )
-
-bez_xy <- function(xs, ys, cx, cy, xe, ye, t) {
-  tibble::tibble(
-    x = (1-t)^2*xs + 2*(1-t)*t*cx + t^2*xe,
-    y = (1-t)^2*ys + 2*(1-t)*t*cy + t^2*ye
-  )
-}
-
-bezier_df_net <- dplyr::bind_rows(
-  E_nl %>% dplyr::transmute(gid, x = xs, y = ys, lw, a),
-  E_nl %>% dplyr::transmute(gid, x = cx, y = cy, lw, a),
-  E_nl %>% dplyr::transmute(gid, x = xe, y = ye, lw, a)
-)
-
-tm <- (AR_T0 + AR_T1) / 2
-arrow_df_net <- dplyr::bind_rows(
-  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(p0 = list(bez_xy(xs,ys,cx,cy,xe,ye,AR_T0))) %>%
-    tidyr::unnest_wider(p0) %>% dplyr::transmute(gid, x, y, lw, step=1),
-  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(pm = list(bez_xy(xs,ys,cx,cy,xe,ye,tm))) %>%
-    tidyr::unnest_wider(pm) %>% dplyr::transmute(gid, x, y, lw, step=2),
-  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(p1 = list(bez_xy(xs,ys,cx,cy,xe,ye,AR_T1))) %>%
-    tidyr::unnest_wider(p1) %>% dplyr::transmute(gid, x, y, lw, step=3)
-) %>% dplyr::arrange(gid, step)
-
-label_nl_net <- E_nl %>%
-  dplyr::rowwise() %>%
-  dplyr::mutate(
-    pL = list(bez_xy(xs,ys,cx,cy,xe,ye,LAB_T)),
-    lx = pL$x + curv_sign * LAB_NOFF * nx,
-    ly = pL$y + curv_sign * LAB_NOFF * ny
-  ) %>%
-  dplyr::ungroup() %>%
-  dplyr::select(lx, ly, label)
-
-E_lp_net  <- E_net %>% dplyr::filter(is_loop)
-loop_df_net <- E_lp_net %>%
-  dplyr::transmute(x0=x1, y0=y1, r=LOOP_R, lw, a, label, node=from)
-loop_labels_net <- loop_df_net %>%
-  dplyr::rowwise() %>%
-  dplyr::mutate(ang=(pi/180)*LOOP_ANG[node],
-                lx=x0+r*cos(ang), ly=y0+r*sin(ang)) %>%
-  dplyr::ungroup() %>%
-  dplyr::select(lx, ly, label)
-
-p_trans_net <- ggplot2::ggplot() +
-  ggforce::geom_bezier(data=bezier_df_net,
-    ggplot2::aes(x=x, y=y, group=gid, linewidth=lw, alpha=a),
-    colour="grey60", lineend="round", show.legend=FALSE) +
-  ggforce::geom_bezier(data=arrow_df_net,
-    ggplot2::aes(x=x, y=y, group=gid, linewidth=lw),
-    colour="grey60", alpha=1,
-    arrow=grid::arrow(length=ARROW_SZ, type="closed"),
-    lineend="round", show.legend=FALSE) +
-  ggforce::geom_circle(data=loop_df_net,
-    ggplot2::aes(x0=x0, y0=y0, r=r, linewidth=lw, alpha=a),
-    colour="grey60", show.legend=FALSE) +
-  ggplot2::geom_label(data=label_nl_net,
-    ggplot2::aes(x=lx, y=ly, label=label),
-    fill="white", color="grey25", label.size=0,
-    label.padding=unit(0.08,"lines"), size=3.5, family="sans",
-    show.legend=FALSE) +
-  ggplot2::geom_label(data=loop_labels_net,
-    ggplot2::aes(x=lx, y=ly, label=label),
-    fill="white", color="grey25", label.size=0,
-    label.padding=unit(0.08,"lines"), size=3.5, family="sans",
-    show.legend=FALSE) +
-  ggplot2::geom_point(data=nodes_net,
-    ggplot2::aes(x=x, y=y, fill=state_long),
-    shape=21, size=20, stroke=0.5, colour="white", show.legend=FALSE) +
-  ggplot2::geom_text(data=nodes_net,
-    ggplot2::aes(x=x, y=y, label=name),
-    size=7, fontface="bold", color="white") +
-  ggplot2::scale_fill_manual(values=net_palette) +
-  ggplot2::scale_linewidth_identity() +
-  ggplot2::scale_alpha_identity() +
-  ggplot2::coord_equal(clip="off") +
-  ggplot2::theme_void() +
-  ggplot2::theme(plot.margin=margin(12, 30, 12, 30))
-
-ggsave(here::here("output", "fig_transition_ggraph.png"),
-       p_trans_net, width=7.8, height=5.6, dpi=300)
-ggsave(here::here("output", "fig_transition_ggraph.pdf"),
-       p_trans_net, width=7.8, height=5.6)
-
-message("  Figure 2 saved: output/fig_transition_ggraph.png/.pdf")
+message("  Figure 1 saved: output/fig_profiles_clean.png/.pdf")

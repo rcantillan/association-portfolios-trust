@@ -618,70 +618,56 @@ if (!is.null(preds) && nrow(preds) > 0) {
       )
   }
 
-  # x-axis order: β (Clustering) → γ (Bridging) → α (Isolation)
+  # x-axis order matching Stata Fig.3: Closed(β) -> Broker(γ) -> Apathetic(α)
   preds <- preds %>%
     dplyr::mutate(
       clase_order = dplyr::case_when(
-        clase_int == 1L ~ 1L,
-        clase_int == 2L ~ 2L,
-        clase_int == 3L ~ 3L,
+        clase_int == 1L ~ 1L,   # β Closed
+        clase_int == 2L ~ 2L,   # γ Bridging
+        clase_int == 3L ~ 3L,   # α Isolate/Apathetic
         TRUE ~ NA_integer_
       ),
-      wave_label = as.character(wave_year),
-      # Short x-axis labels using Greek notation
-      clase_label_short = dplyr::case_when(
-        clase_int == 1L ~ "β  Clustering",
-        clase_int == 2L ~ "γ  Bridging",
-        clase_int == 3L ~ "α  Isolation",
-        TRUE ~ clase_label
-      ),
-      # Clean facet labels
-      outcome_clean = dplyr::recode(outcome_label,
-        "Generalized trust (c02)" = "Generalized trust",
-        "Trust in neighbors (t01)" = "Neighborhood trust"
-      )
+      wave_label = as.character(wave_year)
     )
-
-  # Wave colors (NPG, light mint → teal → dark navy = 2016 → 2018 → 2022)
-  wave_colors <- c("2016" = "#91D1C2", "2018" = "#4DBBD5", "2022" = "#3C5488")
 
   fig3 <- ggplot2::ggplot(
     preds,
     ggplot2::aes(
-      x    = reorder(clase_label_short, clase_order),
-      y    = estimate,
-      ymin = conf.low,
-      ymax = conf.high,
-      fill = wave_label
+      x     = reorder(clase_label, clase_order),
+      y     = estimate,
+      ymin  = conf.low,
+      ymax  = conf.high,
+      color = wave_label,
+      group = wave_label
     )
   ) +
-    ggplot2::geom_col(
-      position  = ggplot2::position_dodge(width = 0.72),
-      width     = 0.62,
-      color     = NA
+    ggplot2::geom_ribbon(alpha = 0.10, color = NA) +
+    ggplot2::geom_line(linewidth = 0.9) +
+    ggplot2::geom_point(size = 2.5) +
+    ggplot2::facet_wrap(~outcome_label, scales = "free_y") +
+    ggplot2::scale_color_manual(
+      values = c("2016" = "#4E79A7", "2018" = "#E15759", "2022" = "#59A14F"),
+      name   = NULL
     ) +
-    ggplot2::geom_errorbar(
-      ggplot2::aes(ymin = conf.low, ymax = conf.high),
-      position  = ggplot2::position_dodge(width = 0.72),
-      width     = 0.16,
-      linewidth = 0.45,
-      color     = "grey40"
+    ggplot2::labs(
+      x       = "Class",
+      y       = "Pr(trust = 1)",
+      color   = NULL,
+      caption = paste0(
+        "RE probit, full controls (nAGQ=", NAGQ, "). Ribbons = 95% CI.\n",
+        "Reference: \u03b3 (Bridging/Broker). AMEs at population level;\n",
+        "SEs from fixed-effect VCOV (Stata margins post-xtprobit equivalent)."
+      )
     ) +
-    ggplot2::facet_wrap(~outcome_clean, scales = "fixed") +
-    ggplot2::scale_fill_manual(values = wave_colors, name = NULL) +
-    ggplot2::scale_y_continuous(
-      labels = scales::percent_format(accuracy = 1),
-      expand = ggplot2::expansion(mult = c(0, 0.08))
-    ) +
-    ggplot2::labs(x = NULL, y = "Predicted probability") +
     theme_ssr() +
     ggplot2::theme(
-      legend.position = "top",
-      axis.text.x     = ggplot2::element_text(size = 10.5, color = "grey20")
+      legend.position = "bottom",
+      strip.text      = ggplot2::element_text(face = "bold"),
+      axis.text.x     = ggplot2::element_text(size = 10)
     )
 
-  ggsave_safe("fig3_predicted_probs.png", fig3, width = 8.5, height = 5)
-  ggsave_safe("fig3_predicted_probs.pdf", fig3, width = 8.5, height = 5)
+  ggsave_safe("fig3_predicted_probs.png", fig3, width = 9, height = 5)
+  ggsave_safe("fig3_predicted_probs.pdf", fig3, width = 9, height = 5)
   message("  Fig3 saved.")
 } else {
   message("  predictions() not available. Fig3 skipped.")
