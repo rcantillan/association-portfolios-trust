@@ -1,32 +1,17 @@
-# ==============================================================================
-# 002_long_latent_class.R — Latent Markov (LMest) with covariates (UPDATED FULL)
-# ------------------------------------------------------------------------------
-# Keeps your ORIGINAL recodings and covariates:
-#   - c12_* recode: ifelse(x < 2, 0, 1)
-#   - edad: categorical bands (18_24, 25_34, ..., 65)
-#   - nivel_educ: básica / media / técnica / univers
-#   - mujer: 0/1 from m0_sexo
+# ── 02_latent_markov.R — Latent Markov model (LMest, K=3) ───────────────────
 #
-# Critical fixes + upgrades:
-#   (1) Missing codes (-999/-888/-666) -> NA BEFORE recoding c12_*
-#   (2) Balanced panel enforced (3 waves all)
-#   (3) Model selection via lmestSearch() (BIC)
-#   (4) Soft posteriors per wave: p_alpha/p_beta/p_gamma + p_max
-#   (5) Optional strict classification: position_strict = NA if p_max < THRESH_STRICT
-#   (6) Diagnostics: entropy, avg posterior by class, quality global + by wave
-#   (7) State mapping alpha/beta/gamma: VERIFICADO contra STATE_MAP de 00_setup.R
-#       α = Isolate (low count), β = Closed (mono-domain), γ = Bridging (diverse)
-#       → Verificación sustantiva obligatoria: ver SECCIÓN 7
+# Estimates K=1..5 LMMs; selects K=3 by BIC. Assigns alpha/beta/gamma labels
+# by membership count (alpha = min) and domain entropy (gamma = max among rest).
+# Anchors LMM sample to dt_analysis.rds to align with trust model sample.
 #
 # Outputs:
 #   output/fit_table_cov.csv
 #   output/latent_profiles_cov_K3.csv
 #   output/transition_matrix_cov_K3.csv
 #   output/classification_diagnostics_cov.txt
-#   output/state_mapping_verification.txt    ← NUEVO: auditoría del mapeo
+#   output/state_mapping_verification.txt
 #   data/dt_states_cov.rds
 #   data/posterior_probs_cov_std.rds
-# ==============================================================================
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -40,7 +25,7 @@ suppressPackageStartupMessages({
 dir.create(here::here("output"), showWarnings = FALSE, recursive = TRUE)
 dir.create(here::here("data"),   showWarnings = FALSE, recursive = TRUE)
 
-# Cargar setup canónico (STATE_MAP, helpers, etc.)
+# Load canonical setup (STATE_MAP, helpers, etc.)
 source(here::here("code", "00_setup.R"))
 
 # ------------------------------------------------------------------------------
@@ -56,16 +41,13 @@ OUT_SUFFIX <- if (exists("MEMBER_CODE_LOGIC") && MEMBER_CODE_LOGIC == "active_on
 message("  02_latent_markov.R | MEMBER_CODE_LOGIC = '", MEMBER_CODE_LOGIC,
         "' | output suffix = '", OUT_SUFFIX, "'")
 
-# MAP_GAMMA_BY:
-#   "entropy"         = γ es el estado con mayor entropía de dominio (más diverso)
-#   "mean_membership" = γ es el estado con mayor conteo medio de membresías
-# RECOMENDACIÓN: usar "entropy" — captura diversidad (bridging), no solo cantidad.
-# VERIFICAR que el estado asignado a γ tenga prob1 alta en ≥4 dominios distintos.
+# MAP_GAMMA_BY: method for identifying the bridging state.
+#   "entropy"         = gamma is the state with highest domain entropy (most diverse)
+#   "mean_membership" = gamma is the state with the highest mean membership count
+# Recommended: "entropy" captures structural diversity, not just quantity.
 MAP_GAMMA_BY <- "entropy"
 
-# ------------------------------------------------------------------------------
-# 0) Load data
-# ------------------------------------------------------------------------------
+# ── 0. Load data ────────────────────────────────────────────────────────────
 stopifnot(file.exists(here::here("data/ELSOC_Long.RData")))
 obj_names <- load(here::here("data/ELSOC_Long.RData"))
 
@@ -74,36 +56,30 @@ a <- if ("elsoc_long_2016_2022" %in% obj_names) {
 } else if (length(obj_names) == 1) {
   get(obj_names[1])
 } else {
-  stop("No se puede identificar el objeto ELSOC. Disponibles: ",
+  stop("Cannot identify ELSOC object. Available: ",
        paste(obj_names, collapse = ", "))
 }
 
-# ------------------------------------------------------------------------------
-# 0b) FILTROS DE MUESTRA — replicando estimation.do líneas 65-67
-#     CRÍTICO: sin estos filtros el panel de 002 difiere del de 01 y Stata,
-#     produciendo ~270 individuos extra que no tienen datos de trust en 003.
-#     muestra==1:        muestra original ELSOC (excluye muestra refresco 2018)
-#     tipo_atricion==1:  solo respondentes completos (excluye atrición parcial)
-# ------------------------------------------------------------------------------
+# ── 0b. Sample filters (must match 01_descriptive_stats.R) ─────────────────
+# Without these filters the LMM sample diverges from the probit sample,
+# producing ~270 extra individuals without valid trust data.
 n_raw <- nrow(a)
 if ("muestra" %in% names(a)) {
   a <- a %>% filter(muestra == 1)
-  message("Filtro muestra==1: ", n_raw, " -> ", nrow(a), " obs")
+  message("Filter muestra==1: ", n_raw, " -> ", nrow(a), " obs")
 } else {
-  warning("Variable 'muestra' no encontrada en ELSOC_Long. Filtro no aplicado.")
+  warning("Variable 'muestra' not found in ELSOC_Long. Filter not applied.")
 }
 n_after_muestra <- nrow(a)
 if ("tipo_atricion" %in% names(a)) {
   a <- a %>% filter(tipo_atricion == 1)
-  message("Filtro tipo_atricion==1: ", n_after_muestra, " -> ", nrow(a), " obs")
+  message("Filter tipo_atricion==1: ", n_after_muestra, " -> ", nrow(a), " obs")
 } else {
-  warning("Variable 'tipo_atricion' no encontrada en ELSOC_Long. Filtro no aplicado.")
+  warning("Variable 'tipo_atricion' not found in ELSOC_Long. Filter not applied.")
 }
 
-# ------------------------------------------------------------------------------
-# 1) Prepare panel (waves 1,3,6 -> 1,2,3) + ORIGINAL recodes
-#    IMPORTANT FIX: missing -> NA BEFORE recoding c12_*
-# ------------------------------------------------------------------------------
+# ── 1. Prepare panel (waves 1,3,6 -> 1,2,3) ─────────────────────────────────
+# Missing codes recoded to NA before binary c12 recode to prevent collapse.
 a_sub <- a %>%
   filter(ola %in% c(1, 3, 6)) %>%
   mutate(
@@ -118,15 +94,14 @@ a_sub <- a %>%
     c12_01, c12_02, c12_03, c12_04, c12_05, c12_06, c12_07, c12_08
   )
 
-# Missing codes -> NA BEFORE recoding (previene colapso en 0/1)
+# Missing codes -> NA before binary recode
 a_sub <- a_sub %>%
   mutate(across(where(is.numeric),
                 ~ replace(.x, .x %in% c(-999, -888, -777, -666), NA)))
 
 a_full <- a_sub %>%
-  # NA-safe recode: usa member_binary() de 00_setup.R para respetar MEMBER_CODE_LOGIC.
-  # MEMBER_CODE_LOGIC = "any_member"  -> c12 >= 2 (inactivo o activo) [análisis principal]
-  # MEMBER_CODE_LOGIC = "active_only" -> c12 == 3 (solo activo) [sensibilidad S7]
+  # Use member_binary() from 00_setup.R to respect MEMBER_CODE_LOGIC
+  # (any_member: c12 >= 2; active_only: c12 == 3 — see sensitivity S7)
   mutate(across(matches("^c12"), ~ member_binary(.x))) %>%
   mutate(conf_gral = case_when(c02 == 1 ~ 1L,
                                c02 == 2 ~ 0L,
@@ -156,17 +131,9 @@ a_full <- a_sub %>%
     c12_01, c12_02, c12_03, c12_04, c12_05, c12_06, c12_07, c12_08
   )
 
-# ------------------------------------------------------------------------------
-# 1b) ANCLAR MUESTRA DEL LMM A LOS INDIVIDUOS VÁLIDOS DE dt_analysis.rds
-# ------------------------------------------------------------------------------
-# PROBLEMA: drop_na(mujer, edad, nivel_educ) en el LMM excluye ~95 individuos
-# que sí tienen trust y controles válidos en el probit (N=3891 en Stata).
-# En Stata, clase se asigna sobre la MISMA muestra que el probit.
-#
-# SOLUCIÓN: si dt_analysis.rds existe (lo produce 01_descriptive_stats.R),
-# restringir a_full a los IDs que pasaron todos los filtros de 01.
-# Esto garantiza que el LMM y el probit operan sobre el mismo conjunto de IDs.
-# ------------------------------------------------------------------------------
+# ── 1b. Anchor LMM sample to dt_analysis.rds ─────────────────────────────────
+# Restricts a_full to IDs that passed all filters in 01_descriptive_stats.R,
+# ensuring the LMM and trust models operate on the same N=1,297 individuals.
 dt_analysis_path <- here::here("data", "dt_analysis.rds")
 if (file.exists(dt_analysis_path)) {
   dt_anal_ids <- readRDS(dt_analysis_path) %>%
@@ -181,32 +148,30 @@ if (file.exists(dt_analysis_path)) {
     dplyr::select(-idencuesta_chr)
   n_after_anchor <- length(unique(a_full$idencuesta))
 
-  message("Anclaje a dt_analysis.rds: ",
+  message("Anchoring to dt_analysis.rds: ",
           n_before_anchor, " -> ", n_after_anchor, " individuos")
   message("  (", n_before_anchor - n_after_anchor,
-          " individuos sin trust/controles válidos excluidos del LMM)")
+          " individuals without valid trust/controls excluded from LMM)")
 } else {
-  warning("dt_analysis.rds no encontrado. ",
-          "Correr 01_descriptive_stats.R primero para anclar la muestra del LMM.")
-  # Fallback: drop_na en covariables del LMM (puede producir N incorrecto)
+  warning("dt_analysis.rds not found. ",
+          "Run 01_descriptive_stats.R first to anchor the LMM sample.")
+  # Fallback: drop_na on LMM covariates (may produce incorrect N)
   a_full <- a_full %>% drop_na(mujer, edad, nivel_educ)
 }
 
-# ------------------------------------------------------------------------------
-# 2) Enforce balanced panel (3 waves)
-# ------------------------------------------------------------------------------
+# ── 2. Enforce balanced panel (3 waves) ───────────────────────────────────────
 items_check <- c("c12_01","c12_02","c12_03","c12_04",
                   "c12_05","c12_06","c12_07","c12_08")
 a_full <- panel_data(a_full, id = idencuesta, wave = ola) %>%
   complete_data(min.waves = "all", vars = items_check) %>%
   as.data.frame()
 
-# lmestSearch() no admite NAs en covariables de transición (mujer, edad, nivel_educ).
-# Eliminar obs con NA en esas vars y re-balancear (mantiene IDs con 3 olas completas).
+# lmestSearch() requires no NAs in transition covariates.
+# Drop observations with NA in mujer/edad/nivel_educ and re-enforce balance.
 n_pre_na <- length(unique(a_full$idencuesta))
 a_full <- a_full %>%
   dplyr::filter(!is.na(mujer), !is.na(edad), !is.na(nivel_educ))
-# Re-enforce balance: conservar solo IDs con exactamente 3 olas tras el drop
+# Re-enforce balance: keep only IDs with exactly 3 waves after the drop
 ids_balanced <- a_full %>%
   dplyr::count(idencuesta) %>%
   dplyr::filter(n == 3) %>%
@@ -214,18 +179,16 @@ ids_balanced <- a_full %>%
 a_full <- a_full %>% dplyr::filter(idencuesta %in% ids_balanced)
 n_post_na <- length(unique(a_full$idencuesta))
 if (n_pre_na - n_post_na > 0)
-  message("  drop_na(covariables LMM): ", n_pre_na, " -> ", n_post_na,
-          " ids (", n_pre_na - n_post_na, " excluidos por NA en mujer/edad/nivel_educ)")
+  message("  drop_na(LMM covariates): ", n_pre_na, " -> ", n_post_na,
+          " ids (", n_pre_na - n_post_na, " excluded due to NA in mujer/edad/nivel_educ)")
 
 message("Balanced panel: ", nrow(a_full), " rows | ",
         length(unique(a_full$idencuesta)), " ids | ",
         length(unique(a_full$ola)), " waves")
-message("  Objetivo Stata probit: ~3891 obs (1297 individuos × 3 olas)")
-message("  Si N difiere mucho, verificar que 01 usó los mismos filtros que estimation.do")
+message("  Target (Stata probit): ~3,891 obs (1,297 individuals x 3 waves)")
+message("  If N differs substantially, check that 01 used the same filters as estimation.do")
 
-# ------------------------------------------------------------------------------
-# 3) Latent Markov model selection (K=1..5) with covariates
-# ------------------------------------------------------------------------------
+# ── 3. Latent Markov model selection (K=1..5) ─────────────────────────────────
 items <- c("c12_01","c12_02","c12_03","c12_04","c12_05","c12_06","c12_07","c12_08")
 
 stopifnot(all(items %in% names(a_full)))
@@ -262,9 +225,7 @@ print(fit_stats)
 K_star <- fit_stats$K[which.min(fit_stats$BIC)]
 message("Selected K by BIC: K* = ", K_star, " | Baseline K=", K_BASELINE)
 
-# ------------------------------------------------------------------------------
-# 4) Extract model at K_BASELINE (K=3)
-# ------------------------------------------------------------------------------
+# ── 4. Extract K=3 model ──────────────────────────────────────────────────────
 if (!is.null(mod_sel$out.single) && length(mod_sel$out.single) >= K_BASELINE) {
   modeloK <- mod_sel$out.single[[K_BASELINE]]
 } else {
@@ -275,9 +236,7 @@ Psi <- modeloK$Psi
 Pi  <- modeloK$Pi
 V   <- modeloK$V
 
-# ------------------------------------------------------------------------------
-# 5) Standardize V -> n x K x TT (robust)
-# ------------------------------------------------------------------------------
+# ── 5. Standardize posterior array V to n x K x TT ───────────────────────────
 reshape_V <- function(V, n, k, TT) {
   d <- dim(V)
   if (length(d) != 3) stop("dim(V) not 3D: ", paste(d, collapse=" x "))
@@ -304,9 +263,7 @@ r     <- length(items)
 
 V_std <- reshape_V(V, n=n, k=k, TT=TT)
 
-# ------------------------------------------------------------------------------
-# 6) Extract P(Y=1|state): items x states
-# ------------------------------------------------------------------------------
+# ── 6. Extract item-response probabilities P(Y=1|state) ───────────────────────
 perm_try <- list(c(1,2,3), c(1,3,2), c(2,1,3), c(2,3,1), c(3,1,2), c(3,2,1))
 Psi_std <- NULL
 for (p in perm_try) {
@@ -319,32 +276,16 @@ if (is.null(Psi_std)) stop("Could not reshape Psi to (r,k,2). dims=",
 prob1 <- Psi_std[,,2, drop=TRUE]  # r x k, probability of category "1"
 rownames(prob1) <- items
 
-# ------------------------------------------------------------------------------
-# 7) Map states -> alpha/beta/gamma — VERIFICACIÓN SUSTANTIVA OBLIGATORIA
-# ------------------------------------------------------------------------------
-# LÓGICA DEL MAPEO (alineada con STATE_MAP de 00_setup.R):
-#
-#   α (alpha) = Isolate/Apathetic:
-#     → Estado con MENOR conteo esperado de membresías (prob1 baja en todos)
-#     → colSums(prob1) mínimo
-#
-#   β (beta) = Closed/Clustering:
-#     → Estado con membresías concentradas en pocos dominios (low entropy)
-#     → Conteo medio intermedio pero entropía baja
-#
-#   γ (gamma) = Bridging/Broker:
-#     → Estado con membresías diversas en múltiples dominios (high entropy)
-#     → Mayor diversidad funcional
-#
-# MÉTODO: primero se asigna alpha (min count) y gamma (max entropy entre
-# los restantes), luego beta queda como el estado residual.
-# ==============================================================================
+# ── 7. Map states to alpha/beta/gamma ─────────────────────────────────────────
+# alpha = min expected membership count (colSums lowest)
+# gamma = max domain entropy among remaining states (most diverse)
+# beta  = residual state
 
-# Conteo esperado de membresías por estado
+# Expected membership count per state
 exp_count <- colSums(prob1, na.rm = TRUE)
 names(exp_count) <- paste0("State_", 1:k)
 
-# Entropía de distribución de membresías por estado (normalizada)
+# Normalised domain entropy per state
 state_entropy <- sapply(1:k, function(s) {
   p <- prob1[, s]
   p <- p / (sum(p) + 1e-12)
@@ -352,17 +293,17 @@ state_entropy <- sapply(1:k, function(s) {
 })
 names(state_entropy) <- paste0("State_", 1:k)
 
-# α = menor conteo
+# alpha = lowest count
 alpha_state <- which.min(exp_count)
 
-# γ = mayor entropía entre los estados no-alpha
+# gamma = highest entropy among non-alpha states
 remaining <- setdiff(1:k, alpha_state)
 gamma_state <- remaining[which.max(state_entropy[remaining])]
 
-# β = estado residual
+# beta = residual state
 beta_state <- setdiff(1:k, c(alpha_state, gamma_state))
 
-# Guard: beta debe ser escalar
+# Guard: beta should be scalar
 if (length(beta_state) != 1) {
   warning("beta_state tiene longitud inesperada: ", length(beta_state),
           ". Usando order(exp_count) como fallback.")
@@ -383,29 +324,27 @@ message("  \u03b3 (Bridging) = State ", gamma_state,
         " | exp_count=", round(exp_count[gamma_state], 3),
         " | entropy=",   round(state_entropy[gamma_state], 3))
 
-# VERIFICACIÓN SUSTANTIVA: gamma debe tener prob1 alta en ≥ 4 dominios
+# Verify that gamma has high prob1 in >= 4 domains
 gamma_n_high <- sum(prob1[, gamma_state] >= 0.30)
 beta_n_high  <- sum(prob1[, beta_state]  >= 0.30)
 alpha_n_high <- sum(prob1[, alpha_state] >= 0.30)
 
-message("\n  Verificación (prob1 >= 0.30 por estado):")
-message("    \u03b1: ", alpha_n_high, " dominios activos (esperado: ≤2)")
-message("    \u03b2: ", beta_n_high,  " dominios activos (esperado: 1-3, concentrado)")
-message("    \u03b3: ", gamma_n_high, " dominios activos (esperado: ≥4, diverso)")
+message("\n  Verification (prob1 >= 0.30 per state):")
+message("    \u03b1: ", alpha_n_high, " active domains (expected: <= 2)")
+message("    \u03b2: ", beta_n_high,  " active domains (expected: 1-3, concentrated)")
+message("    \u03b3: ", gamma_n_high, " active domains (expected: >= 4, diverse)")
 
 if (gamma_n_high < 3) {
-  warning("ATENCIÓN: gamma_state tiene solo ", gamma_n_high,
-          " dominios con prob1>=0.30. Verificar que el mapeo es correcto.",
-          "\nConsiderar cambiar MAP_GAMMA_BY o revisar K_BASELINE.")
+  warning("gamma_state has only ", gamma_n_high,
+          " domains with prob1>=0.30. Check that the mapping is correct.",
+          "\nConsider changing MAP_GAMMA_BY or K_BASELINE.")
 }
 if (alpha_n_high > 3) {
-  warning("ATENCIÓN: alpha_state tiene ", alpha_n_high,
-          " dominios activos. Puede no corresponder a 'Isolate'.")
+  warning("alpha_state has ", alpha_n_high,
+          " active domains -- may not correspond to Isolate.")
 }
 
-# ------------------------------------------------------------------------------
-# 8) Build dt_states_cov with soft posteriors + modal class (+ strict)
-# ------------------------------------------------------------------------------
+# ── 8. Build dt_states_cov with posteriors and modal assignments ────────────
 Uhat <- sapply(seq_len(TT), function(t)
   max.col(V_std[, , t, drop = TRUE], ties.method = "first"))
 Uhat <- matrix(Uhat, nrow = n, ncol = TT)
@@ -418,7 +357,7 @@ label_state <- function(s) {
   )
 }
 
-# Soft posteriors long
+# Soft posteriors (long format)
 post_long <- rbindlist(lapply(seq_len(TT), function(t) {
   pp <- V_std[, , t, drop = TRUE]
   data.table(
@@ -431,7 +370,7 @@ post_long <- rbindlist(lapply(seq_len(TT), function(t) {
   )
 }))
 
-# Modal long
+# Modal (hard) assignments (long format)
 modal_dt <- rbindlist(lapply(seq_len(TT), function(t) {
   data.table(
     idencuesta = ids,
@@ -446,14 +385,12 @@ dt_states <- merge(dt_states, post_long, by = c("idencuesta","ola"), all.x = TRU
 dt_states <- merge(dt_states, modal_dt,  by = c("idencuesta","ola"), all.x = TRUE)
 dt_states[, position := factor(position, levels = c("alpha","beta","gamma"))]
 
-# Strict classification
+# Strict classification: NA if max posterior < THRESH_STRICT
 dt_states[, position_strict := as.character(position)]
 dt_states[p_max < THRESH_STRICT, position_strict := NA_character_]
 dt_states[, position_strict := factor(position_strict, levels = c("alpha","beta","gamma"))]
 
-# ------------------------------------------------------------------------------
-# 9) Diagnostics + exports
-# ------------------------------------------------------------------------------
+# ── 9. Diagnostics and exports ────────────────────────────────────────────────
 pp_mat <- as.matrix(dt_states[, .(p_alpha, p_beta, p_gamma)])
 eps <- 1e-12
 entropy_norm <- -mean(rowSums(pp_mat * log(pp_mat + eps), na.rm = TRUE)) / log(k)
@@ -481,7 +418,7 @@ quality_by_wave <- dt_states[, .(
   n            = .N
 ), by = ola][order(ola)]
 
-# Transition matrix average
+# Average transition matrix
 Pi_avg <- Pi
 if (length(dim(Pi)) == 3) Pi_avg <- apply(Pi, c(1,2), mean)
 
@@ -489,7 +426,7 @@ ord_states <- c(alpha_state, beta_state, gamma_state)
 Pi_reord <- Pi_avg[ord_states, ord_states, drop = FALSE]
 rownames(Pi_reord) <- colnames(Pi_reord) <- c("alpha","beta","gamma")
 
-# Save profiles + transitions
+# Save item-response profiles and transition matrix
 prob_df <- as.data.frame(prob1)
 colnames(prob_df) <- paste0("State_", 1:k)
 prob_df$item       <- items
@@ -498,12 +435,8 @@ write_csv(prob_df, here::here("output", paste0("latent_profiles_cov_K3", OUT_SUF
 trans_df <- as.data.frame(Pi_reord) %>% tibble::rownames_to_column("from")
 write_csv(trans_df, here::here("output", paste0("transition_matrix_cov_K3", OUT_SUFFIX, ".csv")))
 
-# ==============================================================================
-# 9b) VERIFICATION REPORT — STATE MAPPING AUDIT
-# ==============================================================================
-# Este archivo debe revisarse ANTES de correr 003_trust_models.R
-# para confirmar que el mapeo α/β/γ es sustantivamente correcto.
-# ==============================================================================
+# ── 9b. State mapping verification report ─────────────────────────────────────
+# Review output/state_mapping_verification.txt before running 03_trust_models.R
 
 prob_display <- round(prob1, 3)
 rownames(prob_display) <- items
@@ -522,22 +455,22 @@ verify_lines <- c(
   paste0("  exp_count  (colSums prob1): ", paste(round(exp_count, 3), collapse=" | ")),
   paste0("  entropy    (domain divers): ", paste(round(state_entropy, 3), collapse=" | ")),
   "",
-  "--- Probabilidades de membresía (P(Y=1|state)) ---",
+  "--- Membership probabilities P(Y=1|state) ---",
   "    Items x States:",
   capture.output(print(prob_display)),
   "",
   "--- Dominios activos (prob1 >= 0.30) ---",
-  paste0("  \u03b1 State_", alpha_state, ": ", alpha_n_high, " dominios activos (esperado: <= 2)"),
-  paste0("  \u03b2 State_", beta_state,  ": ", beta_n_high,  " dominios activos (esperado: 1-3, concentrado)"),
-  paste0("  \u03b3 State_", gamma_state, ": ", gamma_n_high, " dominios activos (esperado: >= 4, diverso)"),
+  paste0("  \u03b1 State_", alpha_state, ": ", alpha_n_high, " active domains (expected: <= 2)"),
+  paste0("  \u03b2 State_", beta_state,  ": ", beta_n_high,  " active domains (expected: 1-3, concentrated)"),
+  paste0("  \u03b3 State_", gamma_state, ": ", gamma_n_high, " active domains (expected: >= 4, diverse)"),
   "",
-  "--- SUSTANTIVE CHECK (responder Sí/No antes de correr 003) ---",
-  "  1. ¿El estado alpha tiene probabilidades bajas en la mayoría de dominios?",
-  "  2. ¿El estado beta concentra membresías en 1-3 dominios (e.g., religioso, vecinal)?",
-  "  3. ¿El estado gamma tiene probabilidades >= 0.30 en >= 4 dominios distintos?",
-  "  4. ¿El orden alpha < beta < gamma tiene sentido sustantivo como Isolate/Closed/Bridging?",
+  "--- Substantive check (answer Yes/No before running 03_trust_models.R) ---",
+  "  1. Does alpha have low probabilities across most domains?",
+  "  2. Does beta concentrate memberships in 1-3 domains (e.g., religious, neighbourhood)?",
+  "  3. Does gamma have probabilities >= 0.30 in >= 4 distinct domains?",
+  "  4. Does the alpha/beta/gamma ordering make sense as Isolate/Closed/Bridging?",
   "",
-  "  Si NO: cambiar MAP_GAMMA_BY, revisar K_BASELINE, o ajustar alpha_state manualmente.",
+  "  If NO: change MAP_GAMMA_BY, review K_BASELINE, or adjust alpha_state manually.",
   "",
   "--- Average transition matrix (alpha/beta/gamma) ---",
   capture.output(print(round(Pi_reord, 3))),
@@ -549,8 +482,8 @@ verify_lines <- c(
          round(quality_global$share_strict, 3), " obs clasificados")
 )
 writeLines(verify_lines, here::here("output", paste0("state_mapping_verification", OUT_SUFFIX, ".txt")))
-message("\n  VERIFICACIÓN guardada: output/state_mapping_verification.txt")
-message("  *** REVISAR ESTE ARCHIVO ANTES DE CORRER 003_trust_models.R ***")
+message("\n  Verification saved: output/state_mapping_verification.txt")
+message("  *** Review this file before running 03_trust_models.R ***")
 
 # Diagnostics completo
 diag_txt <- c(
@@ -579,9 +512,7 @@ diag_txt <- c(
 )
 writeLines(diag_txt, here::here("output", paste0("classification_diagnostics_cov", OUT_SUFFIX, ".txt")))
 
-# ------------------------------------------------------------------------------
-# 10) Save objects
-# ------------------------------------------------------------------------------
+# ── 10. Save objects ──────────────────────────────────────────────────────────
 saveRDS(as_tibble(dt_states), here::here("data", paste0("dt_states_cov", OUT_SUFFIX, ".rds")))
 
 saveRDS(
@@ -611,17 +542,18 @@ saveRDS(
     THRESH_STRICT  = THRESH_STRICT,
     MAP_GAMMA_BY   = MAP_GAMMA_BY,
     MEMBER_CODE_LOGIC = MEMBER_CODE_LOGIC,
-    STATE_MAP      = STATE_MAP   # heredado de 00_setup.R
+    STATE_MAP      = STATE_MAP
   ),
   here::here("data", paste0("posterior_probs_cov_std", OUT_SUFFIX, ".rds"))
 )
 
-message("\n[02_latent_markov.R] DONE. MEMBER_CODE_LOGIC = '", MEMBER_CODE_LOGIC, "'")
+message("\n[02_latent_markov.R] done. MEMBER_CODE_LOGIC = '", MEMBER_CODE_LOGIC, "'")
+message("Analysis N target: 1,297 individuals, 3,891 person-waves")
 message("Saved: output/fit_table_cov",               OUT_SUFFIX, ".csv")
 message("Saved: output/latent_profiles_cov_K3",      OUT_SUFFIX, ".csv")
 message("Saved: output/transition_matrix_cov_K3",    OUT_SUFFIX, ".csv")
 message("Saved: output/classification_diagnostics_cov", OUT_SUFFIX, ".txt")
-message("Saved: output/state_mapping_verification",  OUT_SUFFIX, ".txt  *** REVISAR ***")
+message("Saved: output/state_mapping_verification",  OUT_SUFFIX, ".txt")
 message("Saved: data/dt_states_cov",                 OUT_SUFFIX, ".rds")
 message("Saved: data/posterior_probs_cov_std",       OUT_SUFFIX, ".rds")
 message("")
@@ -629,7 +561,7 @@ message("Entropy=",   round(entropy_norm, 4),
         " | mean_p_max=",    round(quality_global$mean_p_max, 3),
         " | share_strict=",  round(quality_global$share_strict, 3))
 message("")
-message("MAPEO FINAL (confirmar en state_mapping_verification.txt):")
+message("Final mapping (confirm in state_mapping_verification.txt):")
 message("  \u03b1 (Isolate)  = State ", alpha_state, " | clase=3")
 message("  \u03b2 (Closed)   = State ", beta_state,  " | clase=1")
 message("  \u03b3 (Bridging) = State ", gamma_state, " | clase=2 [REFERENCIA]")
@@ -637,22 +569,17 @@ message("  \u03b3 (Bridging) = State ", gamma_state, " | clase=2 [REFERENCIA]")
 
 
 
-# ==============================================================================
-# 11) FIGURE 1 — Latent class profiles
-# Append at end of 002_long_latent_class.R (after final message block)
-# Objects in memory: prob1, alpha_state, beta_state, gamma_state, K_BASELINE
-# ==============================================================================
+# ── 11. Figure 1 — Latent class profiles ─────────────────────────────────────
 
 suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(tidyr)
   library(scales)
-  library(grid)
   library(glue)
 })
 
-# ── Domain labels ──────────────────────────────────────────────────────────────
+# Domain labels
 domain_order_fig <- c("c12_01","c12_02","c12_03","c12_04",
                        "c12_05","c12_06","c12_07","c12_08")
 
@@ -667,20 +594,22 @@ domain_labels_fig <- c(
   c12_08 = "Student orgs."
 )
 
-# ── State key: MUST map from section-7 indices (α=blue, β=green, γ=red) ───────
+# State key — NPG colors (match STATE_PALETTE_LEGACY from 00_setup.R)
 state_key_fig <- tibble(
-  state_idx  = c(alpha_state,   beta_state,      gamma_state),
+  state_idx  = c(alpha_state,  beta_state,       gamma_state),
   state_col  = paste0("State_", c(alpha_state, beta_state, gamma_state)),
   state_long = c("\u03b1 (isolation)",
                  "\u03b2 (clustering)",
                  "\u03b3 (bridging)"),
-  col        = c("#4E79A7", "#59A14F", "#E15759")
+  col        = c("#3C5488",   # dark navy   — α isolation
+                 "#4DBBD5",   # bright teal — β clustering
+                 "#E64B35")   # warm red    — γ bridging
 )
 
 state_pal_fig  <- setNames(state_key_fig$col, state_key_fig$state_long)
 state_lvls_fig <- state_key_fig$state_long
 
-# ── Prevalence from dt_states for strip subtitles ─────────────────────────────
+# Prevalence from dt_states — used in facet strip labels
 prev_tbl <- tryCatch({
   readRDS(here::here("data","dt_states_cov.rds")) %>%
     count(position) %>%
@@ -702,12 +631,13 @@ make_strip_label <- function(sl) {
   }
   sl
 }
+
 state_labels_fig <- setNames(
   sapply(state_lvls_fig, make_strip_label),
   state_lvls_fig
 )
 
-# ── Reshape prob1 → long ───────────────────────────────────────────────────────
+# Reshape to long format
 prob_long_fig <- as.data.frame(prob1) %>%
   setNames(paste0("State_", seq_len(ncol(prob1)))) %>%
   mutate(item = rownames(prob1)) %>%
@@ -721,36 +651,36 @@ prob_long_fig <- as.data.frame(prob1) %>%
       recode(item, !!!domain_labels_fig),
       levels = rev(recode(domain_order_fig, !!!domain_labels_fig))
     ),
-    prob_label = if_else(prob >= 0.15,
-                         percent(prob, accuracy = 1),
-                         NA_character_)
+    prob_label = percent(prob, accuracy = 1)
   )
 
-# ── Plot ───────────────────────────────────────────────────────────────────────
+# ── Plot ─────────────────────────────────────────────────────────────────────
 p_profiles_fig <- ggplot(prob_long_fig,
-                         aes(x = item_lab, y = prob,
-                             color = state_long, fill = state_long)) +
-
-  # Subtle bar fill behind lollipop (same color, very transparent)
-  #geom_col(width = 0.55, alpha = 0.08, show.legend = FALSE) +
+                         aes(x = item_lab, y = prob, color = state_long)) +
 
   # Lollipop stem
   geom_segment(aes(xend = item_lab, y = 0, yend = prob),
-             linewidth = 0.5,      # ← antes era 1.1
-             alpha = 0.70,
-             lineend = "round", show.legend = FALSE) +
-
-  # Reference dashed line at 50%
-  geom_hline(yintercept = 0.50, linetype = "22",
-             color = "grey55", linewidth = 0.5) +
+               color     = "grey82",
+               linewidth = 0.55,
+               lineend   = "round",
+               show.legend = FALSE) +
 
   # Dot
-  geom_point(size = 4.5, alpha = 0.95, show.legend = FALSE) +
+  geom_point(size = 4.0, show.legend = FALSE) +
 
-  # Percentage label above dot (only for prob >= 15%)
-  geom_text(aes(label = prob_label, y = prob + 0.065),
-            size = 2.9, fontface = "bold",
-            na.rm = TRUE, show.legend = FALSE) +
+  # Percentage label to the right of dot
+  geom_text(aes(label = prob_label),
+            hjust  = -0.55,
+            size   = 3.0,
+            color  = "grey35",
+            family = "sans",
+            show.legend = FALSE) +
+
+  # 50% reference line (shown after coord_flip as vertical)
+  geom_hline(yintercept = 0.50,
+             linetype   = "22",
+             color      = "grey70",
+             linewidth  = 0.4) +
 
   coord_flip() +
 
@@ -758,82 +688,195 @@ p_profiles_fig <- ggplot(prob_long_fig,
              labeller = labeller(state_long = state_labels_fig)) +
 
   scale_color_manual(values = state_pal_fig) +
-  scale_fill_manual( values = state_pal_fig) +
-
   scale_y_continuous(
-    limits = c(0, 1),
+    limits = c(0, 1.10),
     breaks = c(0, .25, .50, .75, 1.0),
     labels = percent_format(accuracy = 1),
-    expand = expansion(mult = c(0.01, 0.10))
+    expand = c(0, 0)
   ) +
 
-  labs(
-    x = NULL,
-    y = "Pr(member\u202f|\u202fstate)",
-    caption = paste0(
-      "Item-response probabilities from Latent Markov Model (K\u2009=\u2009",
-      K_BASELINE, "; ELSOC balanced panel 2016\u20132022). ",
-      "Labels shown for Pr\u202f\u2265\u202f15%. Dashed line at 50%.\n",
-      "Strip brackets show pooled position prevalence. ",
-      "\u03b1\u202f=\u202fisolation, \u03b2\u202f=\u202fclustering, \u03b3\u202f=\u202fbridging."
-    )
-  ) +
+  labs(x = NULL, y = "Pr(member\u202f|\u202fstate)") +
 
-  theme_minimal(base_size = 12, base_family = "sans") +
+  theme_ssr(base_size = 12) +
   theme(
-    strip.text         = element_text(face = "bold", size = 12.5,
-                                      color = "white",
-                                      margin = margin(t = 7, b = 7)),
-    strip.background   = element_rect(color = NA, fill = "grey30"),
+    strip.text         = element_text(size = 12, color = "grey15"),
+    strip.background   = element_blank(),
     panel.grid.major.y = element_blank(),
-    panel.grid.minor   = element_blank(),
-    panel.grid.major.x = element_line(color = "grey92", linewidth = 0.4),
-    panel.spacing      = unit(1.2, "lines"),
-    axis.text.y        = element_text(size = 11, color = "grey15"),
+    panel.grid.major.x = element_line(color = "grey92", linewidth = 0.35),
+    panel.spacing      = unit(1.1, "lines"),
+    axis.text.y        = element_text(size = 11, color = "grey20"),
     axis.text.x        = element_text(size = 10, color = "grey30"),
-    axis.title.x       = element_text(face = "bold", size = 12,
-                                      margin = margin(t = 10)),
-    plot.caption       = element_text(size = 8, color = "grey50",
-                                      hjust = 0, lineheight = 1.3,
-                                      margin = margin(t = 12)),
-    plot.margin        = margin(t = 10, r = 22, b = 10, l = 10)
+    axis.title.x       = element_text(size = 11, color = "grey25",
+                                      margin = margin(t = 8)),
+    plot.margin        = margin(t = 10, r = 24, b = 8, l = 10)
   )
 
-# ── Color strip backgrounds — match by label text to avoid inversion ──────────
-gt_profiles <- tryCatch({
-  gb <- ggplot_build(p_profiles_fig)
-  gt <- ggplot_gtable(gb)
-  strip_idx <- which(grepl("^strip", gt$layout$name))
-
-  for (si in strip_idx) {
-    # Extract text label from strip grob tree
-    strip_label <- tryCatch(
-      gt$grobs[[si]]$grobs[[1]]$children[[2]]$children[[1]]$label,
-      error = function(e) ""
-    )
-    # Match by checking which state_lvl is a prefix of the strip label
-    matched <- state_lvls_fig[
-      sapply(state_lvls_fig, function(s) startsWith(strip_label, s))
-    ]
-    if (length(matched) == 1) {
-      gt$grobs[[si]]$grobs[[1]]$children[[1]]$gp$fill <- state_pal_fig[[matched]]
-    }
-  }
-  gt
-}, error = function(e) {
-  message("  Strip color override failed: ", conditionMessage(e))
-  ggplot_gtable(ggplot_build(p_profiles_fig))
-})
-
-# ── Save ───────────────────────────────────────────────────────────────────────
-png(here::here("output", "fig_profiles_clean.png"),
-    width = 7.0, height = 10.0, units = "in", res = 300)
-grid::grid.draw(gt_profiles)
-dev.off()
-
-pdf(here::here("output", "fig_profiles_clean.pdf"),
-    width = 7.0, height = 10.0)
-grid::grid.draw(gt_profiles)
-dev.off()
+# Save (plain ggsave — no gtable hack needed)
+ggsave(here::here("output", "fig_profiles_clean.png"),
+       p_profiles_fig, width = 7.0, height = 10.0, dpi = 300)
+ggsave(here::here("output", "fig_profiles_clean.pdf"),
+       p_profiles_fig, width = 7.0, height = 10.0)
 
 message("  Figure 1 saved: output/fig_profiles_clean.png/.pdf")
+
+# ── Figure 2 — Transition network ────────────────────────────────────────────
+# Uses Pi_reord (rows/cols ordered α, β, γ; named "alpha","beta","gamma").
+
+suppressPackageStartupMessages({
+  library(ggforce)
+})
+
+# ── Knobs ──────────────────────────────────────────────────────────────────
+CURV_OUT <- 1.25;  CURV_IN  <- 0.65
+LAB_T    <- 0.55;  LAB_NOFF <- 0.06
+AR_T0    <- 0.90;  AR_T1    <- 0.995
+ARROW_SZ <- unit(6, "mm")
+LOOP_R   <- 0.30;  NODE_R   <- LOOP_R
+LOOP_ANG <- c("α" = 110, "β" = 160, "γ" = 20)
+W_MIN <- 0.4; W_MAX <- 7.0; W_POW <- 0.70
+A_MIN <- 0.20; A_MAX <- 0.95
+fmt3 <- function(x) sprintf("%.3f", x)
+
+# NPG colors (match STATE_PALETTE_LEGACY)
+net_states  <- c("α", "β", "γ")
+net_levels  <- c("α (isolation)", "β (clustering)", "γ (bridging)")
+net_palette <- c("α (isolation)" = "#3C5488",
+                 "β (clustering)" = "#4DBBD5",
+                 "γ (bridging)"   = "#E64B35")
+
+nodes_net <- tibble::tibble(
+  name       = net_states,
+  state_long = net_levels,
+  x = c(0, -2, 2),
+  y = c(2,  0, 0)
+)
+
+# Extract 9 transitions from Pi_reord (α=row1, β=row2, γ=row3)
+edges_net <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
+  as_tibble() %>%
+  dplyr::mutate(
+    p       = as.numeric(Pi_reord[cbind(from_i, to_i)]),
+    p       = dplyr::if_else(is.na(p), 0, p),
+    from    = net_states[from_i],
+    to      = net_states[to_i],
+    is_loop = (from_i == to_i),
+    label   = fmt3(p),
+    lw      = W_MIN + (W_MAX - W_MIN) * (p ^ W_POW),
+    a       = pmin(A_MAX, pmax(A_MIN, p))
+  )
+
+stopifnot(nrow(edges_net) == 9)
+
+E_net <- edges_net %>%
+  dplyr::left_join(nodes_net %>% dplyr::select(name, x, y), by = c("from" = "name")) %>%
+  dplyr::rename(x1 = x, y1 = y) %>%
+  dplyr::left_join(nodes_net %>% dplyr::select(name, x, y), by = c("to" = "name")) %>%
+  dplyr::rename(x2 = x, y2 = y) %>%
+  dplyr::mutate(
+    dx = x2 - x1, dy = y2 - y1,
+    denom = pmax(1e-9, sqrt(dx^2 + dy^2)),
+    nx = -dy / denom, ny = dx / denom,
+    pair      = paste0(pmin(from_i, to_i), pmax(from_i, to_i)),
+    dir       = dplyr::if_else(from_i < to_i, 1, dplyr::if_else(from_i > to_i, -1, 0)),
+    pair_side = dplyr::case_when(pair=="12" ~ -1, pair=="13" ~ 1,
+                                  pair=="23" ~ -1, TRUE ~ 1),
+    curv_sign = dir * pair_side,
+    curv_mag  = dplyr::if_else(curv_sign == 1, CURV_OUT, CURV_IN)
+  )
+
+E_nl <- E_net %>%
+  dplyr::filter(!is_loop) %>%
+  dplyr::mutate(
+    ux = dx / denom, uy = dy / denom,
+    xs = x1 + NODE_R * ux, ys = y1 + NODE_R * uy,
+    xe = x2 - NODE_R * ux, ye = y2 - NODE_R * uy,
+    mx2 = (xs + xe) / 2,   my2 = (ys + ye) / 2,
+    cx  = mx2 + curv_sign * curv_mag * nx,
+    cy  = my2 + curv_sign * curv_mag * ny,
+    gid = dplyr::row_number()
+  )
+
+bez_xy <- function(xs, ys, cx, cy, xe, ye, t) {
+  tibble::tibble(
+    x = (1-t)^2*xs + 2*(1-t)*t*cx + t^2*xe,
+    y = (1-t)^2*ys + 2*(1-t)*t*cy + t^2*ye
+  )
+}
+
+bezier_df_net <- dplyr::bind_rows(
+  E_nl %>% dplyr::transmute(gid, x = xs, y = ys, lw, a),
+  E_nl %>% dplyr::transmute(gid, x = cx, y = cy, lw, a),
+  E_nl %>% dplyr::transmute(gid, x = xe, y = ye, lw, a)
+)
+
+tm <- (AR_T0 + AR_T1) / 2
+arrow_df_net <- dplyr::bind_rows(
+  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(p0 = list(bez_xy(xs,ys,cx,cy,xe,ye,AR_T0))) %>%
+    tidyr::unnest_wider(p0) %>% dplyr::transmute(gid, x, y, lw, step=1),
+  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(pm = list(bez_xy(xs,ys,cx,cy,xe,ye,tm))) %>%
+    tidyr::unnest_wider(pm) %>% dplyr::transmute(gid, x, y, lw, step=2),
+  E_nl %>% dplyr::rowwise() %>% dplyr::mutate(p1 = list(bez_xy(xs,ys,cx,cy,xe,ye,AR_T1))) %>%
+    tidyr::unnest_wider(p1) %>% dplyr::transmute(gid, x, y, lw, step=3)
+) %>% dplyr::arrange(gid, step)
+
+label_nl_net <- E_nl %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(
+    pL = list(bez_xy(xs,ys,cx,cy,xe,ye,LAB_T)),
+    lx = pL$x + curv_sign * LAB_NOFF * nx,
+    ly = pL$y + curv_sign * LAB_NOFF * ny
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(lx, ly, label)
+
+E_lp_net  <- E_net %>% dplyr::filter(is_loop)
+loop_df_net <- E_lp_net %>%
+  dplyr::transmute(x0=x1, y0=y1, r=LOOP_R, lw, a, label, node=from)
+loop_labels_net <- loop_df_net %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(ang=(pi/180)*LOOP_ANG[node],
+                lx=x0+r*cos(ang), ly=y0+r*sin(ang)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(lx, ly, label)
+
+p_trans_net <- ggplot2::ggplot() +
+  ggforce::geom_bezier(data=bezier_df_net,
+    ggplot2::aes(x=x, y=y, group=gid, linewidth=lw, alpha=a),
+    colour="grey60", lineend="round", show.legend=FALSE) +
+  ggforce::geom_bezier(data=arrow_df_net,
+    ggplot2::aes(x=x, y=y, group=gid, linewidth=lw),
+    colour="grey60", alpha=1,
+    arrow=grid::arrow(length=ARROW_SZ, type="closed"),
+    lineend="round", show.legend=FALSE) +
+  ggforce::geom_circle(data=loop_df_net,
+    ggplot2::aes(x0=x0, y0=y0, r=r, linewidth=lw, alpha=a),
+    colour="grey60", show.legend=FALSE) +
+  ggplot2::geom_label(data=label_nl_net,
+    ggplot2::aes(x=lx, y=ly, label=label),
+    fill="white", color="grey25", label.size=0,
+    label.padding=unit(0.08,"lines"), size=3.5, family="sans",
+    show.legend=FALSE) +
+  ggplot2::geom_label(data=loop_labels_net,
+    ggplot2::aes(x=lx, y=ly, label=label),
+    fill="white", color="grey25", label.size=0,
+    label.padding=unit(0.08,"lines"), size=3.5, family="sans",
+    show.legend=FALSE) +
+  ggplot2::geom_point(data=nodes_net,
+    ggplot2::aes(x=x, y=y, fill=state_long),
+    shape=21, size=20, stroke=0.5, colour="white", show.legend=FALSE) +
+  ggplot2::geom_text(data=nodes_net,
+    ggplot2::aes(x=x, y=y, label=name),
+    size=7, fontface="bold", color="white") +
+  ggplot2::scale_fill_manual(values=net_palette) +
+  ggplot2::scale_linewidth_identity() +
+  ggplot2::scale_alpha_identity() +
+  ggplot2::coord_equal(clip="off") +
+  ggplot2::theme_void() +
+  ggplot2::theme(plot.margin=margin(12, 30, 12, 30))
+
+ggsave(here::here("output", "fig_transition_ggraph.png"),
+       p_trans_net, width=7.8, height=5.6, dpi=300)
+ggsave(here::here("output", "fig_transition_ggraph.pdf"),
+       p_trans_net, width=7.8, height=5.6)
+
+message("  Figure 2 saved: output/fig_transition_ggraph.png/.pdf")

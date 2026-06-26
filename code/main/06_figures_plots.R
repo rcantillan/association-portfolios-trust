@@ -1,17 +1,13 @@
-# ==============================================================================
-# figures_plots.R — SSR-ready figures (FINAL: consistent state colors + better labels)
-# ------------------------------------------------------------------------------
+# ── 06_figures_plots.R — Main manuscript figures ──────────────────────────────
 # Requires in memory:
-#   - prob_df: data.frame with columns item + State_1..State_3 (P(Y=1|state))
-#   - Pi_avg:  3x3 matrix of average transition probabilities
-#   - K_BASELINE (3), MOD_TRANS (1)
-#   - ggsave_safe()  (your helper)
-# ------------------------------------------------------------------------------
-# Outputs (output/):
-#   - fig_profiles_clean.(png/pdf)
-#   - fig_transition_ggraph.(png/pdf)
-#   - fig_transition_heatmap.(png/pdf)
-# ==============================================================================
+#   prob_df: data.frame with columns item + State_1..State_3 (P(Y=1|state))
+#   Pi_avg:  3x3 matrix of average transition probabilities
+#   K_BASELINE (3), MOD_TRANS (1), ggsave_safe()
+#
+# Outputs:
+#   output/fig_profiles_clean.(png/pdf)
+#   output/fig_transition_ggraph.(png/pdf)
+#   output/fig_transition_heatmap.(png/pdf)
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -25,91 +21,111 @@ suppressPackageStartupMessages({
   library(here)
 })
 
-# ---------- Theme ----------
-theme_ssr_big <- function(base_size = 16, base_family = "sans") {
-  theme_minimal(base_size = base_size, base_family = base_family) +
-    theme(
-      panel.grid.minor = element_blank(),
-      panel.grid.major.x = element_blank(),
-      axis.title = element_text(face = "bold"),
-      plot.title = element_text(face = "bold", size = base_size + 3),
-      plot.subtitle = element_text(color = "grey30", size = base_size),
-      axis.text = element_text(size = base_size),
-      legend.title = element_blank(),
-      legend.text = element_text(size = base_size),
-      legend.position = "top"
-    )
-}
+# ── Theme (from 00_setup.R via source) ──────────────────────────────────────
+# theme_ssr() is already loaded; this script just calls it.
 
-# ---------- Labels ----------
+# ── Labels ───────────────────────────────────────────────────────────────────
 domain_order <- c("nhg","religious","political","union","professional","charity","sport","student")
 
 domain_labels2 <- c(
-  nhg="Neighborhood orgs.",
-  religious="Religious orgs.",
-  political="Political parties",
-  union="Labor unions",
-  professional="Professional assoc.",
-  charity="Charitable orgs.",
-  sport="Sports clubs",
-  student="Student orgs."
+  nhg          = "Neighborhood orgs.",
+  religious    = "Religious orgs.",
+  political    = "Political parties",
+  union        = "Labor unions",
+  professional = "Professional assoc.",
+  charity      = "Charitable orgs.",
+  sport        = "Sports clubs",
+  student      = "Student orgs."
 )
 
-# One SINGLE source of truth for state naming + colors (used in ALL plots)
+# State colors: use STATE_PALETTE_LEGACY from 00_setup.R (NPG palette)
 state_key <- tibble(
-  state_raw  = c("State_1","State_2","State_3"),
-  state_long = c("α (isolation)","β (clustering)","γ (bridging)"),
-  state_short = c("α","β","γ"),
-  col = c("#4E79A7", "#59A14F", "#E15759")
+  state_raw   = c("State_1", "State_2", "State_3"),
+  state_long  = c("α (isolation)", "β (clustering)", "γ (bridging)"),
+  state_short = c("α", "β", "γ"),
+  # NPG colors: α=navy, β=teal, γ=red
+  col = c("#3C5488", "#4DBBD5", "#E64B35")
 )
 
 state_palette <- setNames(state_key$col, state_key$state_long)
 state_levels  <- state_key$state_long
 states_short  <- state_key$state_short
 
-# ==============================================================================
-# FIGURE 1 — Profiles: vertical facets + horizontal bars
-# ==============================================================================
+# Facet label: "α  Isolation  [55%]" style — added as factor label
+STATE_SHARE <- tryCatch({
+  # initial distribution from Pi_avg (row averages ≈ steady-state shares)
+  tibble(
+    state_long  = c("α (isolation)", "β (clustering)", "γ (bridging)"),
+    share_label = c(
+      sprintf("α — Isolation  [%d%%]",  round(mean(Pi_avg[, "alpha"  ]) * 100)),
+      sprintf("β — Clustering [%d%%]",  round(mean(Pi_avg[, "beta"   ]) * 100)),
+      sprintf("γ — Bridging   [%d%%]",  round(mean(Pi_avg[, "gamma"  ]) * 100))
+    )
+  )
+}, error = function(e) {
+  tibble(
+    state_long  = c("α (isolation)", "β (clustering)", "γ (bridging)"),
+    share_label = c("α — Isolation", "β — Clustering", "γ — Bridging")
+  )
+})
+
+# ── Figure 1 — Membership profiles (lollipop) ────────────────────────────────
 prob_long <- prob_df |>
   pivot_longer(starts_with("State_"), names_to = "state_raw", values_to = "prob") |>
   left_join(state_key, by = "state_raw") |>
+  left_join(STATE_SHARE, by = "state_long") |>
   mutate(
-    state_long = factor(state_long, levels = state_levels),
-    item       = factor(item, levels = rev(domain_order)),
-    item_lab   = recode(as.character(item), !!!domain_labels2)
+    state_long   = factor(state_long, levels = state_levels),
+    share_label  = factor(share_label, levels = STATE_SHARE$share_label),
+    item         = factor(item, levels = rev(domain_order)),
+    item_lab     = recode(as.character(item), !!!domain_labels2),
+    pct_label    = scales::percent(prob, accuracy = 1)
   )
 
-p_profiles_clean <- ggplot(prob_long, aes(x = item_lab, y = prob, fill = state_long)) +
-  geom_col(width = 0.75, color = "white", linewidth = 0.35) +
-  coord_flip() +
-  facet_wrap(~state_long, ncol = 1) +
-  scale_fill_manual(values = state_palette) +
-  scale_y_continuous(limits = c(0, 1), labels = percent_format(accuracy = 1)) +
-  labs(
-    #title = paste0("Latent portfolio profiles (K=", K_BASELINE, ", mod=", MOD_TRANS, ")"),
-    x = NULL,
-    y = "Pr(member)"
+p_profiles_clean <- ggplot(
+  prob_long,
+  aes(x = item_lab, y = prob, color = state_long)
+) +
+  # stem from 0 to point
+  geom_segment(
+    aes(xend = item_lab, yend = 0),
+    color    = "grey82",
+    linewidth = 0.55
   ) +
-  theme_ssr_big() +
+  # dot
+  geom_point(size = 3.2, show.legend = FALSE) +
+  # percentage label to the right of dot
+  geom_text(
+    aes(label = pct_label),
+    hjust  = -0.32,
+    size   = 3.0,
+    color  = "grey35",
+    family = "sans"
+  ) +
+  coord_flip() +
+  facet_wrap(~share_label, ncol = 1) +
+  scale_color_manual(values = state_palette) +
+  scale_y_continuous(
+    limits = c(0, 1.12),
+    labels = scales::percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  labs(x = NULL, y = "Pr(member | state)") +
+  theme_ssr(base_size = 13) +
   theme(
-    legend.position = "none",
-    strip.text = element_text(face = "bold", size = 18),
+    legend.position    = "none",
+    strip.text         = element_text(size = 12.5, color = "grey15"),
     panel.grid.major.y = element_blank(),
-    axis.text.y = element_text(size = 14)
+    panel.grid.major.x = element_line(color = "grey93", linewidth = 0.3),
+    axis.text.y        = element_text(size = 11.5, color = "grey25"),
+    panel.spacing      = unit(1.1, "lines")
   )
 
-ggsave_safe("fig_profiles_clean.png", p_profiles_clean, width = 8.5, height = 9.5)
-ggsave(here::here("output","fig_profiles_clean.pdf"), p_profiles_clean, width = 8.5, height = 9.5)
+ggsave_safe("fig_profiles_clean.png", p_profiles_clean, width = 7.5, height = 9.5)
+ggsave(here::here("output", "fig_profiles_clean.pdf"), p_profiles_clean, width = 7.5, height = 9.5)
 
-# ==============================================================================
-# FIGURE 2 — Transition network (GGFORCE FINAL: directed arrows + width variation
-#           + edges end exactly on the node "ring"/self-loop circle)
-#   - 9 transitions from Pi_avg
-#   - 2 distinct arcs per unordered pair (i→j and j→i)
-#   - labels embedded on each directed arc
-#   - arrowheads drawn as short CURVED bezier pieces near the end (crisp)
-#   - IMPORTANT: edges are TRIMMED to start/end on the node ring (NODE_R)
-# ==============================================================================
+# ── Figure 2 — Transition network ─────────────────────────────────────────────
+# 9 directed transitions from Pi_avg; arrows trimmed to node ring (NODE_R).
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -120,9 +136,7 @@ suppressPackageStartupMessages({
   library(here)
 })
 
-# -----------------------
-# Knobs you may tweak
-# -----------------------
+# Tunable knobs
 CURV_OUT  <- 1.25
 CURV_IN   <- 0.65
 
@@ -151,20 +165,17 @@ A_MAX <- 0.95
 LAB_DIGITS <- 3
 fmt <- function(x) sprintf(paste0("%.", LAB_DIGITS, "f"), x)
 
-# -----------------------
-# State labels + colors
-# -----------------------
+# State labels and colors
 states_short <- c("α","β","γ")
 state_levels <- c("α (isolation)","β (clustering)","γ (bridging)")
+# NPG colors (match STATE_PALETTE_LEGACY from 00_setup.R)
 state_palette <- c(
-  "α (isolation)"  = "#4E79A7",
-  "β (clustering)" = "#59A14F",
-  "γ (bridging)"   = "#E15759"
+  "α (isolation)"  = "#3C5488",   # dark navy
+  "β (clustering)" = "#4DBBD5",   # bright teal
+  "γ (bridging)"   = "#E64B35"    # warm red
 )
 
-# -----------------------
-# Nodes (triangle layout)
-# -----------------------
+# Nodes in triangle layout
 nodes <- tibble(
   name = states_short,
   state_long = state_levels,
@@ -172,9 +183,7 @@ nodes <- tibble(
   y = c(2,  0,  0)
 )
 
-# -----------------------
-# 1) Extract ALL 9 transitions from Pi_avg
-# -----------------------
+# 1) Extract all 9 transitions from Pi_avg
 edges <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
   as_tibble() %>%
   mutate(
@@ -191,9 +200,7 @@ edges <- expand.grid(from_i = 1:3, to_i = 1:3) %>%
 
 stopifnot(nrow(edges) == 9)
 
-# -----------------------
 # 2) Join node coordinates and compute geometry
-# -----------------------
 E <- edges %>%
   left_join(nodes %>% select(name, x, y), by = c("from" = "name")) %>% rename(x1 = x, y1 = y) %>%
   left_join(nodes %>% select(name, x, y), by = c("to"   = "name")) %>% rename(x2 = x, y2 = y) %>%
@@ -221,9 +228,7 @@ E <- edges %>%
     curv_mag  = if_else(curv_sign == 1, CURV_OUT, CURV_IN)
   )
 
-# -----------------------
-# 3) Non-loop edges: TRIM endpoints to touch the node ring
-# -----------------------
+# 3) Non-loop edges: trim endpoints to touch the node ring
 E_nl <- E %>%
   filter(!is_loop) %>%
   mutate(
@@ -289,9 +294,7 @@ label_nl <- E_nl %>%
   ungroup() %>%
   select(lx, ly, label)
 
-# -----------------------
-# 4) Loops: circles + labels (also trimmed edges already avoid entering the ring)
-# -----------------------
+# 4) Loops: circles + labels
 E_lp <- E %>% filter(is_loop)
 
 loop_df <- E_lp %>%
@@ -311,16 +314,14 @@ loop_labels <- loop_df %>%
   ungroup() %>%
   select(lx, ly, label)
 
-# -----------------------
-# 5) Plot
-# -----------------------
+# 5) Build plot
 p_trans <- ggplot() +
 
   # Curved edges (base)
   ggforce::geom_bezier(
     data = bezier_df,
     aes(x = x, y = y, group = gid, linewidth = lw, alpha = a),
-    colour = "grey65",
+    colour = "grey60",
     lineend = "round",
     show.legend = FALSE
   ) +
@@ -329,7 +330,7 @@ p_trans <- ggplot() +
   ggforce::geom_bezier(
     data = arrow_bezier_df,
     aes(x = x, y = y, group = gid, linewidth = lw),
-    colour = "grey65",
+    colour = "grey60",
     alpha  = 2,
     arrow  = grid::arrow(length = ARROW_SZ, type = "closed"),
     lineend = "round",
@@ -340,41 +341,45 @@ p_trans <- ggplot() +
   ggforce::geom_circle(
     data = loop_df,
     aes(x0 = x0, y0 = y0, r = r, linewidth = lw, alpha = a),
-    colour = "grey65",
+    colour = "grey60",
     show.legend = FALSE
   ) +
 
-  # Labels
+  # Edge labels — no border, white fill blends with background
   geom_label(
     data = label_nl,
     aes(x = lx, y = ly, label = label),
-    fill = "white",
-    label.size = 0.25,
-    label.padding = unit(0.10, "lines"),
-    size = 3.8,
+    fill        = "white",
+    color       = "grey25",
+    label.size  = 0,          # no border
+    label.padding = unit(0.08, "lines"),
+    size        = 3.5,
+    family      = "sans",
     show.legend = FALSE
   ) +
   geom_label(
     data = loop_labels,
     aes(x = lx, y = ly, label = label),
-    fill = "white",
-    label.size = 0.25,
-    label.padding = unit(0.10, "lines"),
-    size = 3.8,
+    fill        = "white",
+    color       = "grey25",
+    label.size  = 0,
+    label.padding = unit(0.08, "lines"),
+    size        = 3.5,
+    family      = "sans",
     show.legend = FALSE
   ) +
 
-  # Nodes
+  # Nodes — clean circles, NPG fill, thin stroke
   geom_point(
     data = nodes,
     aes(x = x, y = y, fill = state_long),
-    shape = 21, size = 18, stroke = 0.8, colour = "#3a3a3a",
+    shape = 21, size = 20, stroke = 0.5, colour = "white",
     show.legend = FALSE
   ) +
   geom_text(
     data = nodes,
     aes(x = x, y = y, label = name),
-    size = 6.5, fontface = "bold"
+    size = 7, fontface = "bold", color = "white"
   ) +
 
   scale_fill_manual(values = state_palette) +
@@ -383,7 +388,7 @@ p_trans <- ggplot() +
   coord_equal(clip = "off") +
   theme_void(base_size = 14) +
   theme(plot.margin = margin(12, 30, 12, 30)) +
-  labs(title = "")
+  labs()
 
 # Save
 ggsave(here::here("output","fig_transition_ggraph.pdf"), p_trans, width = 7.8, height = 5.6)
@@ -391,9 +396,7 @@ ggsave(here::here("output","fig_transition_ggraph.png"), p_trans, width = 7.8, h
 
 p_trans
 
-# ==============================================================================
-# FIGURE 3 — Transition heatmap (optional SI)
-# ==============================================================================
+# ── Figure 3 — Transition heatmap (SI) ───────────────────────────────────────
 Pi_heat <- as.data.frame(as.table(Pi_avg))
 colnames(Pi_heat) <- c("from_i","to_i","p")
 

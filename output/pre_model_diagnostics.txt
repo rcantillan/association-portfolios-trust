@@ -1,12 +1,12 @@
-=== PRE-MODEL DIAGNOSTICS (003_trust_models.R) ===
-Fecha: 2026-04-13 11:48:41.057857
+=== PRE-MODEL DIAGNOSTICS (03_trust_models.R) ===
+Fecha: 2026-06-26 16:48:53.138523
 nAGQ = 12 | Stata GHQ = 12
 
 N disponible R (trust+controles): 3891
 N total con clase no-NA: 3891
-N objetivo Stata: 3891
-Diferencia: 0
-  Si |diferencia| > 200, revisar filtros muestra/tipo_atricion en 01.
+N target Stata: 3,891
+Difference: 0
+  If |diff| > 200, check muestra/tipo_atricion filters in 01.
 
 --- Trust por clase (esperado: γ > α > β) ---
 # A tibble: 3 × 6
@@ -16,7 +16,7 @@ Diferencia: 0
 2 alpha        3 α (Isolate/Apathetic)  2160 0.086    0.469
 3 beta         1 β (Closed/Clustering)  1334 0.053    0.519
 
---- Distribución trust ---
+--- Trust distribution ---
 
    0    1 
 3574  317 

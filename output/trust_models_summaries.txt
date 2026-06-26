@@ -7,8 +7,8 @@ Formula: trust ~ clase_f + swb + employed + couple + ola_f + (1 | idencuesta_f)
    Data: d
 Control: lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 5e+05))
 
-     AIC      BIC   logLik deviance df.resid 
-  2065.5   2121.9  -1023.8   2047.5     3882 
+      AIC       BIC    logLik -2*log(L)  df.resid 
+   2065.5    2121.9   -1023.8    2047.5      3882 
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -22,7 +22,7 @@ Number of obs: 3891, groups:  idencuesta_f, 1297
 Fixed effects:
             Estimate Std. Error z value Pr(>|z|)    
 (Intercept) -1.63764    0.16664  -9.827  < 2e-16 ***
-clase_f1    -0.56534    0.14274  -3.961 7.48e-05 ***
+clase_f1    -0.56534    0.14274  -3.960 7.48e-05 ***
 clase_f3    -0.27670    0.12675  -2.183   0.0290 *  
 swb          0.22152    0.10024   2.210   0.0271 *  
 employed     0.10287    0.08658   1.188   0.2348    
@@ -50,8 +50,8 @@ Formula: trust_nh ~ clase_f + swb + employed + couple + ola_f + (1 | idencuesta_
    Data: d
 Control: lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 5e+05))
 
-     AIC      BIC   logLik deviance df.resid 
-  4990.8   5047.2  -2486.4   4972.8     3882 
+      AIC       BIC    logLik -2*log(L)  df.resid 
+   4990.8    5047.2   -2486.4    4972.8      3882 
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -66,7 +66,7 @@ Fixed effects:
             Estimate Std. Error z value Pr(>|z|)    
 (Intercept) -0.01892    0.11651  -0.162   0.8710    
 clase_f1    -0.06899    0.11105  -0.621   0.5344    
-clase_f3    -0.25268    0.10363  -2.438   0.0148 *  
+clase_f3    -0.25268    0.10362  -2.438   0.0148 *  
 swb          0.33545    0.07463   4.495 6.97e-06 ***
 employed     0.09438    0.06137   1.538   0.1241    
 couple       0.05527    0.06343   0.871   0.3836    
@@ -93,8 +93,8 @@ Formula: trust ~ clase_f + swb + employed + couple + ola_f + (1 | idencuesta_f)
    Data: d
 Control: lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 5e+05))
 
-     AIC      BIC   logLik deviance df.resid 
-  2065.5   2121.9  -1023.8   2047.5     3882 
+      AIC       BIC    logLik -2*log(L)  df.resid 
+   2065.5    2121.9   -1023.8    2047.5      3882 
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -136,8 +136,8 @@ Formula: trust_nh ~ clase_f + swb + employed + couple + ola_f + (1 | idencuesta_
    Data: d
 Control: lme4::glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 5e+05))
 
-     AIC      BIC   logLik deviance df.resid 
-  4990.8   5047.2  -2486.4   4972.8     3882 
+      AIC       BIC    logLik -2*log(L)  df.resid 
+   4990.8    5047.2   -2486.4    4972.8      3882 
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -152,7 +152,7 @@ Fixed effects:
             Estimate Std. Error z value Pr(>|z|)    
 (Intercept) -0.08791    0.08060  -1.091   0.2754    
 clase_f2     0.06899    0.11105   0.621   0.5344    
-clase_f3    -0.18368    0.07535  -2.438   0.0148 *  
+clase_f3    -0.18368    0.07536  -2.438   0.0148 *  
 swb          0.33545    0.07463   4.495 6.97e-06 ***
 employed     0.09438    0.06137   1.538   0.1241    
 couple       0.05527    0.06343   0.871   0.3836    

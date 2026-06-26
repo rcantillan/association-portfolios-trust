@@ -1,0 +1,58 @@
+\documentclass[english,12pt]{article}
+\setlength\parskip{2ex}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{blindtext}
+\usepackage{tabulary}
+\usepackage{graphicx}
+\usepackage{authblk}
+%\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[paperheight=16cm,paperwidth=12cm,textwidth=8cm]{geometry}
+\usepackage[flushleft]{threeparttable}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{ragged2e}
+\usepackage{xcolor}
+\usepackage{dcolumn}
+\usepackage{caption}    % para caption + notas consistentes
+
+% Tables: better text wrapping + left alignment in p/X columns
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\appto\TPTnoteSettings{\footnotesize}
+
+\usepackage[
+        backend=biber,
+        style=authoryear-comp,
+        sorting=nyt,
+        style=apa
+    ]{biblatex}
+ \addbibresource{references_ssr.bib}
+
+
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=30mm,
+ right=30mm,
+ top=30mm,
+ bottom=30mm
+ }
+
+% Keywords command
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+
+\graphicspath{{output/}}
+

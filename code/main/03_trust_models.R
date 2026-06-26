@@ -1,39 +1,18 @@
-# ==============================================================================
-# 003_trust_models.R — Modelos de confianza
-# ==============================================================================
-# PIPELINE:
-#   00_setup.R → 01_descriptive_stats.R → 002_long_latent_class.R → [ESTE]
+# ── 03_trust_models.R — RE probit trust models ───────────────────────────────
 #
-# TERMINOLOGÍA CANÓNICA (STATE_MAP de 00_setup.R — NO ALTERAR):
+# Canonical STATE_MAP (from 00_setup.R):
 #   α (alpha) = Isolate/Apathetic  | clase=3 | ref=ib3
 #   β (beta)  = Closed/Clustering  | clase=1 | ref=ib1
-#   γ (gamma) = Bridging/Broker    | clase=2 | ref=ib2 [REFERENCIA en estimation.do]
+#   γ (gamma) = Bridging/Broker    | clase=2 | ref=ib2 [REFERENCE in estimation.do]
 #
-# NOTAS METODOLÓGICAS CRÍTICAS:
+# Methodological notes:
+#   nAGQ=12: matches Stata xtprobit GHQ-12 quadrature (Laplace default is biased).
+#   Cluster-robust SEs via sandwich::vcovCL (requires merDeriv for estfun.glmerMod).
+#   marginaleffects_safe=FALSE: silences warning about fixed-effect VCOV in GLMM,
+#     consistent with Stata margins post-xtprobit.
 #
-#   (A) nAGQ = 9 — FIX PRINCIPAL vs versión anterior:
-#     Stata xtprobit usa cuadratura de Gauss-Hermite (GHQ, default 12 puntos).
-#     glmer() con default (Laplace, nAGQ=1) subestima sistemáticamente sigma_u
-#     del RE probit, produciendo AMEs 5-10× más pequeños que Stata.
-#     Fix: nAGQ=9 (≥7 recomendado para RE probit; balance exactitud/tiempo).
-#     Para replicación exacta de Stata: NAGQ <- 12L (más lento).
-#     Ref: Pinheiro & Bates (2000); Rabe-Hesketh & Skrondal (2012).
-#
-#   (B) Cluster-robust SEs — FIX (reemplaza clubSandwich::vcovCR):
-#     clubSandwich::vcovCR falla con "$ operator not defined for S4 class"
-#     porque glmerMod es S4 y vcovCR usa acceso S3 ($) a internos del modelo.
-#     Fix: sandwich::vcovCL(~idencuesta_f, type="HC1") vía argumento
-#     vcov=~cluster en avg_slopes. Requiere merDeriv para estfun.glmerMod.
-#     Si vcovCL también falla → fallback a model vcov (SEs no-clustered).
-#
-#   (C) marginaleffects_safe = FALSE:
-#     Silencia warning: AMEs en GLMM usan solo VCOV de parámetros fijos.
-#     Equivalente a Stata margins dydx(*) post-xtprobit (re.form=NA).
-#     Footnote tablas: "AMEs at population level; SEs from fixed-effect
-#     VCOV, consistent with Stata margins post-xtprobit."
-#
-# OUTPUTS:
-#   output/pre_model_diagnostics.txt     ← REVISAR ANTES DE INTERPRETAR
+# Outputs:
+#   output/pre_model_diagnostics.txt
 #   output/table4_reprobit_ref_bridging.csv
 #   output/table5_reprobit_ref_closed.csv
 #   output/tableA1_probit_pool_ref_closed.csv
@@ -43,7 +22,6 @@
 #   output/ame_all_models.csv
 #   output/trust_models_summaries.txt
 #   data/trust_model_objects.rds
-# ==============================================================================
 
 options(marginaleffects_safe = FALSE)
 
@@ -56,27 +34,19 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-# merDeriv: provee estfun() y bread() para objetos merMod (glmerMod / lmerMod)
-# Esto es NECESARIO para que sandwich::vcovCL funcione con glmer (nAGQ >= 1).
-# Sin este paquete, vcovCL falla con:
-#   "no applicable method for estfun applied to class glmerMod"
-if (!requireNamespace("merDeriv", quietly = TRUE)) {
-  message("Instalando merDeriv (necesario para vcovCL con glmerMod)...")
+# merDeriv provides estfun() and bread() for merMod objects, required for
+# sandwich::vcovCL to work with glmer.
+if (!requireNamespace("merDeriv", quietly = TRUE))
   install.packages("merDeriv", quiet = TRUE)
-}
 suppressPackageStartupMessages(library(merDeriv))
 
 dir.create(here::here("output"), showWarnings = FALSE)
 dir.create(here::here("data"),   showWarnings = FALSE)
 
-# nAGQ global — cambiar aquí si se quiere experimentar
-# 9  = buena aproximación de GHQ-12 de Stata; más rápido
-# 12 = equivalente exacto a Stata xtprobit default (más lento)
+# nAGQ=12 matches Stata xtprobit GHQ-12 (nAGQ=9 is faster but slightly less exact)
 NAGQ <- 12L
 
-# ==============================================================================
-# 1. CARGAR Y FUSIONAR
-# ==============================================================================
+# ── 1. Load and merge ─────────────────────────────────────────────────────────
 stop_if_missing(c(
   here::here("data", "dt_states_cov.rds"),
   here::here("data", "dt_analysis.rds")
@@ -103,7 +73,7 @@ dt_anal_join <- dt_anal %>%
 dt_states    <- dt_states    %>% dplyr::mutate(idencuesta = as.character(idencuesta))
 dt_anal_join <- dt_anal_join %>% dplyr::mutate(idencuesta = as.character(idencuesta))
 
-# Solo traer columnas de dt_anal que NO están ya en dt_states (evita .x/.y conflicts)
+# Only bring columns from dt_anal not already in dt_states (avoid .x/.y conflicts)
 cols_new <- setdiff(names(dt_anal_join),
                     c("idencuesta", "ola", setdiff(names(dt_states), c("idencuesta","ola"))))
 dt <- dplyr::left_join(
@@ -114,19 +84,17 @@ dt <- dplyr::left_join(
 
 n_matched   <- sum(!is.na(dt$trust))
 pct_matched <- round(n_matched / nrow(dt) * 100, 1)
-message("Match exitoso: ", n_matched, "/", nrow(dt), " obs (", pct_matched, "%)")
+message("Match: ", n_matched, "/", nrow(dt), " obs (", pct_matched, "%)")
 if (pct_matched < 80)
-  warning("< 80% obs con trust. Verificar filtros en 01 y 002.")
+  warning("< 80% obs have trust. Check filters in 01 and 02.")
 
-# ==============================================================================
-# 2. VARIABLES DERIVADAS — STATE_MAP CANÓNICO
-# ==============================================================================
+# ── 2. Derived variables — canonical STATE_MAP ────────────────────────────────
 dt <- dt %>%
   dplyr::mutate(
     clase = dplyr::case_when(
-      position == "alpha" ~ 3L,   # α Isolate/Apathetic  | clase=3 | ib3
-      position == "beta"  ~ 1L,   # β Closed/Clustering   | clase=1 | ib1
-      position == "gamma" ~ 2L,   # γ Bridging/Broker     | clase=2 | ib2 ← REF
+      position == "alpha" ~ 3L,   # α Isolate   clase=3 ib3
+      position == "beta"  ~ 1L,   # β Closed    clase=1 ib1
+      position == "gamma" ~ 2L,   # γ Bridging  clase=2 ib2 [reference]
       TRUE                ~ NA_integer_
     ),
     clase_strict = dplyr::case_when(
@@ -138,65 +106,62 @@ dt <- dt %>%
     clase_label = dplyr::recode(as.character(clase), !!!STATE_LABELS_FIG)
   )
 
-# CONTROLS_TRUST: replica exactamente estimation.do:
-#   xtprobit social_trust ib2.clase i.m0_sexo m0_edad i.swb i.employed i.couple i.t02_01 i.ola
-# education NO aparece en ese modelo; incluirla absorbe el efecto de clase (colinealidad).
+# CONTROLS_TRUST replicates estimation.do: swb, employed, couple.
+# Education excluded to avoid collinearity with portfolio class.
 CONTROLS_TRUST <- c("swb", "employed", "couple")
 
 ctrl_use <- CONTROLS_TRUST[
   CONTROLS_TRUST %in% names(dt) &
   sapply(CONTROLS_TRUST, function(v) sum(!is.na(dt[[v]])) > 0)
 ]
-message("Controles disponibles: ", paste(ctrl_use, collapse = ", "))
+message("Controls available: ", paste(ctrl_use, collapse = ", "))
 
-# ==============================================================================
-# 3. PRE-MODEL DIAGNOSTICS
-#    Revisar ANTES de interpretar cualquier resultado.
-#    Targets Stata: N = 3891 | Patrón: γ(Bridging) > α(Isolate) > β(Closed)
-# ==============================================================================
+# ── 3. Pre-model diagnostics ──────────────────────────────────────────────────
+# Review output/pre_model_diagnostics.txt before interpreting results.
+# Stata targets: N = 3,891 | Pattern: γ(Bridging) > α(Isolate) > β(Closed)
 cat("\n=== PRE-MODEL DIAGNOSTICS ===\n")
 
 diag_lines <- c(
-  "=== PRE-MODEL DIAGNOSTICS (003_trust_models.R) ===",
+  "=== PRE-MODEL DIAGNOSTICS (03_trust_models.R) ===",
   paste0("Fecha: ", Sys.time()),
   paste0("nAGQ = ", NAGQ, " | Stata GHQ = 12"),
   ""
 )
 
-# 3a. N para modelo principal + desglose de pérdidas
+# 3a. Sample size and loss breakdown
 stata_model_vars_check <- intersect(c("trust","clase",ctrl_use,"ola"), names(dt))
 d_check <- dt %>%
   dplyr::filter(!is.na(clase)) %>%
   tidyr::drop_na(dplyr::all_of(stata_model_vars_check))
 
-cat("N disponible modelo principal (trust+controles): ", nrow(d_check), "\n")
-cat("N objetivo Stata:                                 3891\n")
-cat("Diferencia:                                      ", nrow(d_check) - 3891, "\n\n")
+cat("N available for main model (trust + controls): ", nrow(d_check), "\n")
+cat("N target (Stata):                                 3,891\n")
+cat("Difference:                                      ", nrow(d_check) - 3891, "\n\n")
 
-# Desglose de pérdidas por variable — para identificar qué variable reduce el N
-cat("=== Desglose de NAs por variable (en dt con clase no-NA) ===\n")
+# NA breakdown by variable
+cat("=== NA counts by variable (in dt with non-NA clase) ===\n")
 dt_con_clase <- dt %>% dplyr::filter(!is.na(clase))
-cat("  N total con clase no-NA: ", nrow(dt_con_clase), "\n")
+cat("  N total with non-NA clase: ", nrow(dt_con_clase), "\n")
 for (v in stata_model_vars_check) {
   n_miss <- sum(is.na(dt_con_clase[[v]]))
   cat("  NA en", sprintf("%-15s", v), ":", n_miss, "\n")
 }
 cat("\n")
-cat("  Si la diferencia vs Stata (3891) es > 200:\n")
-cat("  -> Verificar filtros muestra==1 y tipo_atricion==1 en 01_descriptive_stats.R\n")
-cat("  -> Verificar que el merge dt_states+dt_analysis no pierde obs\n\n")
+cat("  If difference vs Stata (3,891) > 200:\n")
+cat("  -> Check muestra==1 and tipo_atricion==1 filters in 01_descriptive_stats.R\n")
+cat("  -> Check that dt_states + dt_analysis merge does not drop obs\n\n")
 
 diag_lines <- c(diag_lines,
   paste0("N disponible R (trust+controles): ", nrow(d_check)),
   paste0("N total con clase no-NA: ", nrow(dt_con_clase)),
-  paste0("N objetivo Stata: 3891"),
-  paste0("Diferencia: ", nrow(d_check) - 3891),
-  "  Si |diferencia| > 200, revisar filtros muestra/tipo_atricion en 01.",
+  paste0("N target Stata: 3,891"),
+  paste0("Difference: ", nrow(d_check) - 3891),
+  "  If |diff| > 200, check muestra/tipo_atricion filters in 01.",
   ""
 )
 
-# 3b. Trust medio por clase — patrón esperado γ > α > β (o γ > β > α)
-cat("=== Trust por clase (Stata Fig.3 espera: Broker[γ] > Apathetic[α] > Closed[β]) ===\n")
+# 3b. Mean trust by class — expected pattern: γ > α > β
+cat("=== Trust by class (expected: Broker[γ] > Apathetic[α] > Closed[β]) ===\n")
 trust_by_clase <- dt %>%
   dplyr::filter(!is.na(trust), !is.na(clase)) %>%
   dplyr::group_by(position, clase, clase_label) %>%
@@ -214,63 +179,47 @@ diag_lines <- c(diag_lines,
   capture.output(print(trust_by_clase)), ""
 )
 
-# 3c. Distribución de clases por ola
-cat("\n=== Distribución de clases por ola ===\n")
+# 3c. Class distribution by wave
+cat("\n=== Class distribution by wave ===\n")
 clase_dist <- dt %>%
   dplyr::filter(!is.na(clase)) %>%
   dplyr::count(ola, clase_label) %>%
   tidyr::pivot_wider(names_from = ola, values_from = n, names_prefix = "ola_")
 print(clase_dist)
 
-# 3d. Coding de trust
-cat("\n=== trust (esperado: binaria 0/1) ===\n")
+# 3d. Trust variable coding check
+cat("\n=== trust (expected: binary 0/1) ===\n")
 print(table(dt$trust,    useNA = "ifany"))
 print(table(dt$trust_nh, useNA = "ifany"))
 
 diag_lines <- c(diag_lines,
-  "--- Distribución trust ---",
+  "--- Trust distribution ---",
   capture.output(print(table(dt$trust,    useNA="ifany"))),
   capture.output(print(table(dt$trust_nh, useNA="ifany"))), ""
 )
 
 writeLines(diag_lines, here::here("output", "pre_model_diagnostics.txt"))
-message("  Guardado: output/pre_model_diagnostics.txt — REVISAR ANTES DE CONTINUAR")
+message("  Saved: output/pre_model_diagnostics.txt")
 
-# ==============================================================================
-# 4. HELPERS
-# ==============================================================================
+# ── 4. Helpers ─────────────────────────────────────────────────────────────────
 
-# Cluster-robust SE para glmerMod (nAGQ >= 1)
-# Estrategia: sandwich::vcovCL vía argumento vcov de marginaleffects.
-#   - marginaleffects pasa ~cluster_var directamente a sandwich::vcovCL
-#   - sandwich::vcovCL usa estfun.glmerMod (provisto por merDeriv) para los scores
-#   - Evita el error "$ operator not defined for S4" de clubSandwich::vcovCR
-#   - HC1 = corrección de muestra finita estándar (G/(G-1), G = N clusters)
-#
-# Por qué no clubSandwich::vcovCR:
-#   vcovCR accede a internos del modelo con $ (operador S3), pero glmerMod es S4.
-#   Incompatibilidad entre versiones recientes de clubSandwich y lme4.
-#
-# Por qué vcovCL funciona aquí:
-#   sandwich::vcovCL llama estfun() + bread() via métodos genéricos S4-compatibles
-#   que merDeriv registra para objetos merMod.
-#
-# Retorna: fórmula de cluster (~idencuesta_f) para pasar a avg_slopes(vcov=)
-#          o NULL si merDeriv no está disponible (fallback a model vcov)
+# Returns cluster formula (~idencuesta_f) for avg_slopes(vcov=),
+# or NULL if merDeriv is unavailable (fallback to model vcov).
+# Uses sandwich::vcovCL with HC1 correction (clubSandwich fails on S4 glmerMod).
 get_vcov_formula <- function(model, cluster_var = "idencuesta_f") {
-  # Verificar que merDeriv provee estfun para este modelo
+  # Verify merDeriv provides estfun for this model
   has_estfun <- tryCatch({
     sf <- sandwich::estfun(model)
     is.matrix(sf) && nrow(sf) > 0
   }, error = function(e) FALSE)
 
   if (!has_estfun) {
-    message("  estfun() falló para glmerMod — merDeriv no disponible o incompatible")
-    message("  -> fallback a vcov del modelo (SE no-clustered)")
+    message("  estfun() failed for glmerMod -- merDeriv not available or incompatible")
+    message("  -> fallback to model vcov (non-clustered SEs)")
     return(NULL)
   }
 
-  # Probar que vcovCL funciona antes de retornar la fórmula
+  # Test that vcovCL works before returning the formula
   vcv_test <- tryCatch(
     sandwich::vcovCL(model,
                      cluster = as.formula(paste0("~", cluster_var)),
@@ -280,7 +229,7 @@ get_vcov_formula <- function(model, cluster_var = "idencuesta_f") {
   )
 
   if (is.null(vcv_test)) {
-    message("  vcovCL falló -> fallback a vcov del modelo")
+    message("  vcovCL failed -> fallback to model vcov")
     return(NULL)
   }
 
@@ -294,11 +243,11 @@ get_vcov_formula <- function(model, cluster_var = "idencuesta_f") {
     return(NULL)
   }
 
-  message("  vcovCL HC1 OK — usando cluster-robust SEs")
+  message("  vcovCL HC1 OK -- using cluster-robust SEs")
   as.formula(paste0("~", cluster_var))
 }
 
-# RE probit con nAGQ (equivalente a xtprobit GHQ de Stata)
+# RE probit with nAGQ (equivalent to Stata xtprobit GHQ)
 fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
 
   ref_label <- dplyr::filter(STATE_MAP, clase == ref_clase) %>%
@@ -331,8 +280,8 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
   rhs <- paste(c("clase_f", ctrl, "ola_f", "(1 | idencuesta_f)"), collapse = " + ")
   fml <- as.formula(paste(outcome, "~", rhs))
 
-  # nAGQ≥2 con exactamente 1 RE → equivalente a GHQ de Stata
-  # Fallback a Laplace (nAGQ=1) si converge con error
+  # nAGQ >= 2 with 1 RE is equivalent to Stata GHQ.
+  # Falls back to Laplace (nAGQ=1) on convergence error.
   m <- tryCatch(
     lme4::glmer(
       fml, data = d,
@@ -344,7 +293,7 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
       )
     ),
     error = function(e) {
-      message("  glmer nAGQ=", NAGQ, " falló. Reintentando con Laplace (nAGQ=1).")
+      message("  glmer nAGQ=", NAGQ, " failed. Retrying with Laplace (nAGQ=1).")
       lme4::glmer(
         fml, data = d,
         family  = binomial(link = "probit"),
@@ -356,14 +305,13 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
   )
 
   sigma_u <- round(sqrt(as.numeric(VarCorr(m)$idencuesta_f)), 4)
-  message("    sigma_u=", sigma_u,
-          " (Stata típico: 1.5-2.5 para RE probit con trust)")
+  message("    sigma_u=", sigma_u, " (Stata typical: 1.5-2.5 for RE probit on trust)")
 
   vcov_fml  <- get_vcov_formula(m)
   vcov_type <- ifelse(is.null(vcov_fml), "model_vcov (fallback)", "HC1_cluster")
 
-  # vcov = fórmula ~cluster → sandwich::vcovCL (cluster-robust HC1)
-  # vcov = NULL             → marginaleffects usa vcov(model) (no-clustered, fallback)
+  # vcov = formula ~cluster -> sandwich::vcovCL (cluster-robust HC1)
+  # vcov = NULL             -> marginaleffects uses vcov(model) (fallback)
   ame <- marginaleffects::avg_slopes(
     m, variables = "clase_f", type = "response",
     vcov = if (is.null(vcov_fml)) TRUE else vcov_fml
@@ -381,7 +329,7 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
       sigma_u       = sigma_u
     )
 
-  # Etiquetar contrasts con símbolos canónicos
+  # Label contrasts with canonical Greek symbols
   ame <- ame %>%
     dplyr::mutate(
       contrast_label = stringr::str_replace_all(
@@ -400,7 +348,7 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
       )
     )
 
-  # Predicciones clase x ola para Figure 3
+  # Predicted probabilities by class x wave for Figure 3
   pred <- tryCatch(
     marginaleffects::predictions(
       m,
@@ -419,7 +367,7 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
         clase_label = dplyr::recode(as.character(clase_int), !!!STATE_LABELS_FIG)
       ),
     error = function(e) {
-      warning("predictions() falló en ", label, ": ", e$message)
+      warning("predictions() failed in ", label, ": ", e$message)
       NULL
     }
   )
@@ -430,7 +378,7 @@ fit_reprobit <- function(outcome, data, ref_clase, with_controls, label) {
        vcov_type = vcov_type, sigma_u = sigma_u)
 }
 
-# Pooled probit (Table A1)
+# Pooled probit helper (Table A1)
 fit_probit_pool <- function(outcome, data, ref_clase, with_controls, label) {
 
   ref_label <- dplyr::filter(STATE_MAP, clase == ref_clase) %>%
@@ -472,7 +420,7 @@ fit_probit_pool <- function(outcome, data, ref_clase, with_controls, label) {
   list(model = m, ame = ame, formula = deparse(fml), label = label)
 }
 
-# Causalidad reversa: trust -> clase
+# Reverse causality helper: trust -> clase
 fit_reverse <- function(trust_var, data, with_controls, label) {
 
   d <- data %>%
@@ -521,14 +469,10 @@ fit_reverse <- function(trust_var, data, with_controls, label) {
   list(model = m, slopes = slopes, formula = deparse(fml), label = label)
 }
 
-# ==============================================================================
-# 5. TABLE 4 — RE probit ref=γ Bridging (ib2.clase)
-# ==============================================================================
+# ── 5. Table 4 — RE probit ref=γ Bridging (ib2.clase) ────────────────────────
 message("\n=== TABLE 4: RE probit | ref=\u03b3 Bridging | nAGQ=", NAGQ, " ===")
-message("  Targets paper Table 4 M1: \u03b2=-0.071***, \u03b1=-0.040*")
-message("  Targets paper Table 4 M2: \u03b2=-0.060***, \u03b1=-0.037*")
-message("  Targets paper Table 4 M3: \u03b2=-0.046(ns), \u03b1=-0.091***")
-message("  Targets paper Table 4 M4: \u03b2=-0.073***, \u03b1=-0.092***")
+# Stata targets: β=-0.071***, α=-0.040* (M1); β=-0.060***, α=-0.037* (M2);
+#                β=-0.046(ns), α=-0.091*** (M3); β=-0.073***, α=-0.092*** (M4)
 
 t4_m1 <- fit_reprobit("trust",    dt, ref_clase=2, with_controls=FALSE, label="T4_M1")
 t4_m2 <- fit_reprobit("trust",    dt, ref_clase=2, with_controls=TRUE,  label="T4_M2")
@@ -549,9 +493,9 @@ table4 %>%
                 n_obs, vcov_type, sigma_u) %>%
   print()
 
-# Comparación directa vs Stata
-cat("\n--- Comparación vs Stata (N=3891, Table 4) ---\n")
-# Targets del paper (Table 4, ref=γ Bridging)
+# Direct comparison with Stata targets
+cat("\n--- Comparison vs Stata (N=3,891, Table 4) ---\n")
+# Stata targets for Table 4 (ref=γ Bridging)
 stata_ref <- tibble::tibble(
   spec           = c("T4_M1","T4_M1","T4_M2","T4_M2","T4_M3","T4_M3","T4_M4","T4_M4"),
   contrast_label = rep(c("\u03b2 vs \u03b3", "\u03b1 vs \u03b3"), 4),
@@ -572,9 +516,7 @@ table4 %>%
   dplyr::select(spec, contrast_label, R_est, R_se, sig, stata_est, stata_se, stata_sig) %>%
   print()
 
-# ==============================================================================
-# 6. TABLE 5 — RE probit ref=β Closed (ib1.clase)
-# ==============================================================================
+# ── 6. Table 5 — RE probit ref=β Closed (ib1.clase) ──────────────────────────
 message("\n=== TABLE 5: RE probit | ref=\u03b2 Closed | nAGQ=", NAGQ, " ===")
 
 t5_m5 <- fit_reprobit("trust",    dt, ref_clase=1, with_controls=FALSE, label="T5_M5")
@@ -594,9 +536,7 @@ table5 %>%
   dplyr::select(spec, outcome, contrast_label, estimate, std.error, p.value, sig) %>%
   print()
 
-# ==============================================================================
-# 7. TABLE A1 — Pooled probit ref=β Closed
-# ==============================================================================
+# ── 7. Table A1 — Pooled probit ref=β Closed ─────────────────────────────────
 message("\n=== TABLE A1: Pooled probit | ref=\u03b2 Closed ===")
 
 a1_m1 <- fit_probit_pool("trust",    dt, ref_clase=1, with_controls=FALSE, label="A1_M1")
@@ -616,9 +556,7 @@ tableA1 %>%
   dplyr::select(spec, outcome, contrast, estimate, std.error, p.value, sig) %>%
   print()
 
-# ==============================================================================
-# 8. SENSIBILIDAD: conf_gral
-# ==============================================================================
+# ── 8. Sensitivity: conf_gral alternative outcome ─────────────────────────────
 message("\n=== SENSIBILIDAD: conf_gral ===")
 if ("conf_gral" %in% names(dt) && sum(!is.na(dt$conf_gral)) > 100) {
   s_b <- fit_reprobit("conf_gral", dt, ref_clase=2, with_controls=TRUE, label="Sens_Bridging")
@@ -629,9 +567,7 @@ if ("conf_gral" %in% names(dt) && sum(!is.na(dt$conf_gral)) > 100) {
   }
 } else message("  conf_gral no disponible.")
 
-# ==============================================================================
-# 9. TABLE A2 — Causalidad reversa
-# ==============================================================================
+# ── 9. Table A2 — Reverse causality (trust -> clase) ─────────────────────────
 message("\n=== TABLE A2: Causalidad reversa (trust -> clase) ===")
 
 ra1 <- fit_reverse("trust",    dt, with_controls=FALSE, label="A2_M1")
@@ -650,10 +586,7 @@ tableA2 %>%
   dplyr::select(spec, predictor, estimate, std.error, p.value, sig) %>%
   print()
 
-# ==============================================================================
-# 10. FIGURE 3 — Pr(trust=1) | clase x ola
-#     Replica estructura Stata marginsplot: x=clase, color=ola, facets=outcome
-# ==============================================================================
+# ── 10. Figure 3 — Pr(trust=1) by class and wave ─────────────────────────────
 message("\n=== FIGURE 3 ===")
 
 prep_pred <- function(pred_tbl, outcome_label) {
@@ -685,64 +618,76 @@ if (!is.null(preds) && nrow(preds) > 0) {
       )
   }
 
-  # Ordenar x igual que Stata Fig.3: Closed(β) → Broker(γ) → Apathetic(α)
+  # x-axis order: β (Clustering) → γ (Bridging) → α (Isolation)
   preds <- preds %>%
     dplyr::mutate(
       clase_order = dplyr::case_when(
-        clase_int == 1L ~ 1L,   # β Closed
-        clase_int == 2L ~ 2L,   # γ Bridging
-        clase_int == 3L ~ 3L,   # α Isolate/Apathetic
+        clase_int == 1L ~ 1L,
+        clase_int == 2L ~ 2L,
+        clase_int == 3L ~ 3L,
         TRUE ~ NA_integer_
       ),
-      wave_label = as.character(wave_year)
+      wave_label = as.character(wave_year),
+      # Short x-axis labels using Greek notation
+      clase_label_short = dplyr::case_when(
+        clase_int == 1L ~ "β  Clustering",
+        clase_int == 2L ~ "γ  Bridging",
+        clase_int == 3L ~ "α  Isolation",
+        TRUE ~ clase_label
+      ),
+      # Clean facet labels
+      outcome_clean = dplyr::recode(outcome_label,
+        "Generalized trust (c02)" = "Generalized trust",
+        "Trust in neighbors (t01)" = "Neighborhood trust"
+      )
     )
+
+  # Wave colors (NPG, light mint → teal → dark navy = 2016 → 2018 → 2022)
+  wave_colors <- c("2016" = "#91D1C2", "2018" = "#4DBBD5", "2022" = "#3C5488")
 
   fig3 <- ggplot2::ggplot(
     preds,
     ggplot2::aes(
-      x     = reorder(clase_label, clase_order),
-      y     = estimate,
-      ymin  = conf.low,
-      ymax  = conf.high,
-      color = wave_label,
-      group = wave_label
+      x    = reorder(clase_label_short, clase_order),
+      y    = estimate,
+      ymin = conf.low,
+      ymax = conf.high,
+      fill = wave_label
     )
   ) +
-    ggplot2::geom_ribbon(alpha = 0.10, color = NA) +
-    ggplot2::geom_line(linewidth = 0.9) +
-    ggplot2::geom_point(size = 2.5) +
-    ggplot2::facet_wrap(~outcome_label, scales = "free_y") +
-    ggplot2::scale_color_manual(
-      values = c("2016" = "#4E79A7", "2018" = "#E15759", "2022" = "#59A14F"),
-      name   = NULL
+    ggplot2::geom_col(
+      position  = ggplot2::position_dodge(width = 0.72),
+      width     = 0.62,
+      color     = NA
     ) +
-    ggplot2::labs(
-      x       = "Class",
-      y       = "Pr(trust = 1)",
-      color   = NULL,
-      caption = paste0(
-        "RE probit, full controls (nAGQ=", NAGQ, "). Ribbons = 95% CI.\n",
-        "Reference: \u03b3 (Bridging/Broker). AMEs at population level;\n",
-        "SEs from fixed-effect VCOV (Stata margins post-xtprobit equivalent)."
-      )
+    ggplot2::geom_errorbar(
+      ggplot2::aes(ymin = conf.low, ymax = conf.high),
+      position  = ggplot2::position_dodge(width = 0.72),
+      width     = 0.16,
+      linewidth = 0.45,
+      color     = "grey40"
     ) +
+    ggplot2::facet_wrap(~outcome_clean, scales = "fixed") +
+    ggplot2::scale_fill_manual(values = wave_colors, name = NULL) +
+    ggplot2::scale_y_continuous(
+      labels = scales::percent_format(accuracy = 1),
+      expand = ggplot2::expansion(mult = c(0, 0.08))
+    ) +
+    ggplot2::labs(x = NULL, y = "Predicted probability") +
     theme_ssr() +
     ggplot2::theme(
-      legend.position = "bottom",
-      strip.text      = ggplot2::element_text(face = "bold"),
-      axis.text.x     = ggplot2::element_text(size = 10)
+      legend.position = "top",
+      axis.text.x     = ggplot2::element_text(size = 10.5, color = "grey20")
     )
 
-  ggsave_safe("fig3_predicted_probs.png", fig3, width = 9, height = 5)
-  ggsave_safe("fig3_predicted_probs.pdf", fig3, width = 9, height = 5)
-  message("  Fig3 guardada.")
+  ggsave_safe("fig3_predicted_probs.png", fig3, width = 8.5, height = 5)
+  ggsave_safe("fig3_predicted_probs.pdf", fig3, width = 8.5, height = 5)
+  message("  Fig3 saved.")
 } else {
-  message("  predictions() no disponibles. Fig3 omitida.")
+  message("  predictions() not available. Fig3 skipped.")
 }
 
-# ==============================================================================
-# 11. AME UNIFICADO
-# ==============================================================================
+# ── 11. Unified AME table ──────────────────────────────────────────────────────
 ame_all <- dplyr::bind_rows(
   table4  %>% dplyr::mutate(table = "Table4_ref_Bridging"),
   table5  %>% dplyr::mutate(table = "Table5_ref_Closed"),
@@ -762,9 +707,7 @@ ame_all %>%
   dplyr::select(table, spec, outcome, contrast_label, estimate, std.error, p.value, sig) %>%
   print(n=40)
 
-# ==============================================================================
-# 12. SUMMARIES
-# ==============================================================================
+# ── 12. Model summaries ────────────────────────────────────────────────────────
 mods_to_report <- list(
   "T4_M2 trust ref=\u03b3 +ctrl"    = if (!is.null(t4_m2)) t4_m2$model else NULL,
   "T4_M4 trust_nh ref=\u03b3 +ctrl" = if (!is.null(t4_m4)) t4_m4$model else NULL,
@@ -780,9 +723,7 @@ summ_lines <- unlist(lapply(names(mods_to_report), function(nm) {
 }))
 writeLines(summ_lines, here::here("output","trust_models_summaries.txt"))
 
-# ==============================================================================
-# 13. GUARDAR
-# ==============================================================================
+# ── 13. Save objects ───────────────────────────────────────────────────────────
 saveRDS(
   list(
     dt               = dt,
@@ -799,21 +740,20 @@ saveRDS(
   here::here("data","trust_model_objects.rds")
 )
 
-# ==============================================================================
-# 14. RESUMEN FINAL
-# ==============================================================================
-message("\n[003_trust_models.R] DONE.")
+# ── 14. Final summary ──────────────────────────────────────────────────────────
+message("\n[03_trust_models.R] done.")
 message("  nAGQ=", NAGQ, " | N T4_M2=", if (!is.null(t4_m2)) t4_m2$n else "NULL")
-message("  Controles: ", paste(ctrl_use, collapse=", "))
+message("  Analysis N target: 1,297 individuals, 3,891 person-waves")
+message("  Controls: ", paste(ctrl_use, collapse=", "))
 message("")
-message("  SI AÚN DIFIERE DE STATA:")
-message("    1. Ver output/pre_model_diagnostics.txt (N y patrón trust)")
-message("    2. Probar NAGQ <- 12L para replicación exacta de GHQ-12")
-message("    3. N muy diferente → revisar filtros en 01_descriptive_stats.R")
-message("    4. sigma_u << 1.5 → el RE está mal estimado; usar nAGQ=12")
+message("  If results still differ from Stata:")
+message("    1. See output/pre_model_diagnostics.txt (N and trust pattern)")
+message("    2. Try NAGQ <- 12L for exact GHQ-12 replication")
+message("    3. Large N difference -> check filters in 01_descriptive_stats.R")
+message("    4. sigma_u << 1.5 -> RE poorly estimated; use nAGQ=12")
 message("")
 message("  Outputs:")
-message("    output/pre_model_diagnostics.txt     ← LEER PRIMERO")
+message("    output/pre_model_diagnostics.txt")
 message("    output/table4_reprobit_ref_bridging.csv")
 message("    output/table5_reprobit_ref_closed.csv")
 message("    output/tableA1_probit_pool_ref_closed.csv")

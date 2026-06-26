@@ -1,74 +1,30 @@
-# ==============================================================================
-# 07_replicate_stata_models.R
-# REPLICACIÓN EXACTA DE estimation.do + estimation_2.do EN R
-# ------------------------------------------------------------------------------
-# Replica los modelos del paper tal como están en los archivos .do de Stata.
-# Este script puede correr de forma INDEPENDIENTE leyendo ELSOC_Long.RData
-# directamente (como hace el .do), o usando dt_states.rds del pipeline.
+# ── 07_replicate_stata_models.R — Stata cross-check (estimation.do in R) ──────
+# Replicates estimation.do + estimation_2.do in R. Can run independently from
+# ELSOC_Long.RData or from dt_states.rds produced by the pipeline.
 #
-# VARIABLE CODINGS CONFIRMADAS DEL DATASET REAL (ELSOC Long 2016-2022):
-#   c02: Confianza Social Generalizada
-#         1 = Casi siempre se puede confiar → social_trust=1
-#         2 = Casi siempre hay que tener cuidado → 0
-#         3 = Depende → 0  (Stata: replace=0 if c02>1)
+# Variable codings (ELSOC Long 2016-2022):
+#   c02   : 1=always trust (social_trust=1), 2/3=0 (Stata: replace=0 if c02>1)
+#   t01   : Likert 1-5; trust_nb=1 if t01>3 (codes 4,5)
+#   m02   : employed=1 if m02<=2 (full- or part-time)
+#   m01   : education (1-10); Stata recode: 1/3->1, 4->2, 5->3, 6/7->4, 8/10->5
+#   m36   : couple=1 if m36<4 (cohabiting)
+#   s01   : swb=1 if s01>4 (satisfied)
+#   c12_0x: 1=non-member, 2=inactive, 3=active; any_member = c12>=2
 #
-#   t01: ¿Cuánto confía usted en sus vecinos? (Likert 1-5)
-#         1=Muy poco, 2=Poco, 3=Algo, 4=Bastante, 5=Mucho
-#         Stata: trust_nb=1 if t01>3 → códigos 4,5 = trust
-#
-#   m02: Actividad principal (1-9)
-#         1=Trabaja jornada completa, 2=Trabaja tiempo parcial
-#         3=Estudia y trabaja, 4=Solo estudia, 5=Jubilado/pensionado
-#         6=Desempleado buscando trabajo, 7=Quehaceres del hogar
-#         8=Enfermo/discapacidad, 9=NEET
-#         Stata: employed=1 if m02<=2 (solo trabajo remunerado)
-#
-#   m01: Nivel educacional (1-9)
-#         1=Sin estudios, 2=Básica incompleta, 3=Básica completa
-#         4=Media incompleta, 5=Media completa, 6=Técnica superior incompleta
-#         7=Técnica superior completa, 8=Universitaria incompleta
-#         9=Universitaria completa, 10=Posgrado
-#         Stata recode: (1/3→1)(4→2)(5→3)(6/7→4)(8/10→5)
-#
-#   m36: Estado civil/convivencia
-#         Stata: couple=1 if m36<4 (convive con pareja)
-#
-#   s01: Satisfacción con la vida
-#         Stata: swb=1 if s01>4 (satisfecho)
-#
-#   c12_0x: Membresías organizacionales
-#         1=No es miembro, 2=Miembro inactivo, 3=Miembro activo
-#         any_member = c12>=2 (inactivo o activo)
-#
-# MODELOS REPLICADOS (de estimation.do y estimation_2.do):
-#
-# === estimation.do ===
-#   Table 4 (ref=β/Broker=clase2):
-#     M1: xtprobit social_trust ib2.clase i.ola
-#     M2: xtprobit social_trust ib2.clase + controls + i.ola
-#     M3: xtprobit trust_nb ib2.clase i.ola
-#     M4: xtprobit trust_nb ib2.clase + controls + i.ola
-#   Figure 3: margins clase#ola (predicted probabilities por clase y ola)
-#   Table A2 (reverse causality):
-#     xtreg clase ~ social_trust + controls + i.ola
-#
-# === estimation_2.do ===
-#   Table 5 (ref=α/Closed=clase1, xtprobit):
-#     M5: xtprobit social_trust ib1.clase i.ola
-#     M6: xtprobit social_trust ib1.clase + controls + i.ola
-#     M7: xtprobit trust_nb ib1.clase i.ola
-#     M8: xtprobit trust_nb ib1.clase + controls + i.ola
-#   Table A1 (probit pooled, ref=α/Closed):
-#     Pooled probit versions of M5-M8
+# Models replicated:
+#   estimation.do  — Table 4 (ref=γ Broker/ib2): M1-M4 xtprobit
+#                    Figure 3: margins clase#ola
+#                    Table A2: xtreg clase ~ trust + controls
+#   estimation_2.do — Table 5 (ref=β Closed/ib1): M5-M8 xtprobit
+#                     Table A1: pooled probit versions
 #
 # Outputs:
-#   output/table4_xtprobit_ref_broker.csv     [= Table 4 del paper]
-#   output/table5_xtprobit_ref_closed.csv     [= Table 5 del paper]
-#   output/tableA1_probit_ref_closed.csv      [= Table A1]
-#   output/tableA2_reverse_causality.csv      [= Table A2]
-#   output/figure3_margins_clase_ola.png      [= Figure 3]
-#   output/ame_summary_all_models.csv         [resumen de todos los AMEs]
-# ==============================================================================
+#   output/table4_xtprobit_ref_broker.csv
+#   output/table5_xtprobit_ref_closed.csv
+#   output/tableA1_probit_ref_closed.csv
+#   output/tableA2_reverse_causality.csv
+#   output/figure3_margins_clase_ola.png
+#   output/ame_summary_all_models.csv
 
 source(here::here("code", "00_setup.R"))
 suppressPackageStartupMessages({
@@ -80,56 +36,42 @@ suppressPackageStartupMessages({
 
 dir.create(here::here("output"), showWarnings = FALSE)
 
-# ==============================================================================
-# 1. CARGAR DATOS — preferir dt_states.rds si existe, si no cargar ELSOC raw
-# ==============================================================================
+# ── 1. Load data (prefer dt_states.rds; fall back to ELSOC_Long.RData) ────────
 if (file.exists(here::here("data", "dt_states.rds"))) {
-  message("Usando dt_states.rds (pipeline completo disponible)...")
+  message("Using dt_states.rds (full pipeline available)...")
   dt <- readRDS(here::here("data", "dt_states.rds")) %>% as_tibble()
 
-  # dt_states ya tiene: trust, trust_nh, position (alpha/beta/gamma),
-  # edad, woman, education, employed, swb, couple, tinst, ola, id
-  # Mapear position → clase numérico (para replicar ib1/ib2 de Stata)
-  # Según paper: clase 1=Closed (β), clase 2=Broker (γ), clase 3=Apathetic (α)
+  # dt_states has trust, trust_nh, position (alpha/beta/gamma),
+  # edad, woman, education, employed, swb, couple, tinst, ola, id.
+  # Map position -> numeric clase to replicate ib1/ib2 in Stata.
+  # clase 1=Closed (β), clase 2=Broker (γ), clase 3=Apathetic (α)
   dt <- dt %>%
     dplyr::mutate(
       clase = dplyr::case_when(
-        position == "beta"  ~ 1L,   # Closed   = clase 1
-        position == "gamma" ~ 2L,   # Broker   = clase 2 (referencia en ib2)
+        position == "beta"  ~ 1L,   # Closed    = clase 1
+        position == "gamma" ~ 2L,   # Broker    = clase 2 (reference ib2)
         position == "alpha" ~ 3L,   # Apathetic = clase 3
         TRUE ~ NA_integer_
       )
     )
 
 } else {
-  # Si no hay pipeline previo: cargar ELSOC raw y dataset de clases
-  message("dt_states.rds no encontrado. Cargando desde ELSOC_Long.RData...")
+  # No prior pipeline: load ELSOC raw
+  message("dt_states.rds not found. Loading ELSOC_Long.RData...")
   stop_if_missing(c(here::here("data","ELSOC_Long.RData")))
   obj_names <- load(here::here("data","ELSOC_Long.RData"))
   raw <- if ("elsoc_long_2016_2022" %in% obj_names) get("elsoc_long_2016_2022") else get(obj_names[1])
   dt_raw <- dplyr::as_tibble(raw)
 
-  # Si hay data.long.dta (archivo Stata con clases), necesita haven::read_dta
-  # Aquí asumimos que hay al menos el dataset ELSOC sin clases
-  # Para correr este bloque, ejecutar primero 01_descriptive_stats.R y 02_latent_markov.R
-  stop("Ejecutar primero 01_descriptive_stats.R y 02_latent_markov.R para generar dt_states.rds")
+  # Requires 01_descriptive_stats.R and 02_latent_markov.R to have run first.
+  stop("Run 01_descriptive_stats.R and 02_latent_markov.R first to generate dt_states.rds")
 }
 
-# ==============================================================================
-# 2. CONSTRUIR VARIABLES — replicando EXACTAMENTE estimation.do
-#
-# estimation.do:
-#   gen social_trust = 1 if c02 == 1; replace social_trust = 0 if c02 > 1
-#   gen trust_nb = 1 if t01 > 3;      replace trust_nb = 0 if t01 <= 3
-#   recode m01 (1/3=1)(4=2)(5=3)(6/7=4)(8/10=5)
-#   gen employed = 1 if m02 <= 2;     replace employed = 0 if m02 > 2
-#   gen couple   = 1 if m36 < 4;      replace couple   = 0 if m36 >= 4
-#   gen swb      = 1 if s01 > 4;      replace swb      = 0 if s01 <= 4
-# ==============================================================================
-# Las variables ya están generadas en dt_states.rds por el pipeline.
-# Solo verificamos y mostramos estadísticas básicas.
+# ── 2. Verify variables (all already built by pipeline) ──────────────────────
+# estimation.do: gen social_trust = 1 if c02==1; trust_nb=1 if t01>3;
+#   employed=1 if m02<=2; couple=1 if m36<4; swb=1 if s01>4.
 
-cat("\n=== Verificación de variables (deben coincidir con Stata) ===\n")
+cat("\n=== Variable check (should match Stata) ===\n")
 check_vars <- c("trust","trust_nh","employed","swb","couple","education","clase")
 for (v in check_vars) {
   if (v %in% names(dt)) {
@@ -140,29 +82,20 @@ for (v in check_vars) {
   }
 }
 
-# ==============================================================================
-# 3. PREPARAR DATASET FINAL
-#    Replicando estimation.do líneas 65-87:
-#      keep if muestra==1; keep if tipo_atricion==1
-#      keep if ola==1|3|6
-#      probit → gen in_model; keep if in_model==1; keep n_group==3
-# ==============================================================================
-# dt_states.rds ya aplicó todos estos filtros en 01_descriptive_stats.R
-# Solo verificar que está balanceado
+# ── 3. Prepare balanced panel ─────────────────────────────────────────────────
+# dt_states.rds already applied muestra==1, tipo_atricion==1, ola in 1/3/6.
 
 n_per_id <- dt %>% dplyr::count(id, name = "n_olas")
 balanced_ids <- n_per_id %>% dplyr::filter(n_olas == 3) %>% dplyr::pull(id)
 dt_bal <- dt %>% dplyr::filter(id %in% balanced_ids)
 
-cat("\n=== Panel balanceado ===\n")
-cat("  N individuos:", length(balanced_ids), "\n")
+cat("\n=== Balanced panel ===\n")
+cat("  N individuals:", length(balanced_ids), "\n")
 cat("  N obs person-wave:", nrow(dt_bal), "\n")
-cat("  Distribución de clase:\n")
+cat("  Class distribution:\n")
 print(table(dt_bal$clase, dt_bal$ola, useNA="ifany"))
 
-# ==============================================================================
-# 4. FACTOR VARIABLES Y CLUSTERING
-# ==============================================================================
+# ── 4. Factor variables and clustering ────────────────────────────────────────
 prep_data <- function(data, ref_clase = 2, outcome_var, extra_controls = TRUE) {
   d <- data %>%
     dplyr::mutate(
@@ -171,7 +104,7 @@ prep_data <- function(data, ref_clase = 2, outcome_var, extra_controls = TRUE) {
       clase_f = relevel(as.factor(clase), ref = as.character(ref_clase))
     )
 
-  # Controls (replicando estimation.do: m0_sexo m0_edad swb employed couple t02_01)
+  # Controls replicating estimation.do: m0_sexo m0_edad swb employed couple t02_01
   ctrl_vars <- intersect(
     c("woman","edad","swb","employed","couple","tinst"),
     names(d)
@@ -187,9 +120,7 @@ prep_data <- function(data, ref_clase = 2, outcome_var, extra_controls = TRUE) {
   list(data = d, controls = ctrl_vars)
 }
 
-# ==============================================================================
-# 5. HELPER: vcov cluster-robust CR2
-# ==============================================================================
+# ── 5. Helper: cluster-robust vcov ────────────────────────────────────────────
 vcov_cr <- function(model) {
   tryCatch(
     clubSandwich::vcovCR(model, cluster = model@frame$id_f, type = "CR1"),
@@ -197,9 +128,7 @@ vcov_cr <- function(model) {
   )
 }
 
-# ==============================================================================
-# 6. HELPER: fit xtprobit + AMEs (replicando xtprobit + margins, dydx(*))
-# ==============================================================================
+# ── 6. Helper: fit xtprobit + AMEs (replicates xtprobit + margins, dydx(*)) ──
 fit_xtprobit <- function(outcome, data, ref_clase = 2,
                          with_controls = TRUE, label = "") {
   prep   <- prep_data(data, ref_clase, outcome, with_controls)
@@ -218,7 +147,7 @@ fit_xtprobit <- function(outcome, data, ref_clase = 2,
 
   vcv <- vcov_cr(m)
 
-  # AMEs para clase (= margins, dydx(clase) en Stata)
+  # AMEs for clase (= margins, dydx(clase) in Stata)
   ame <- marginaleffects::avg_slopes(
     m, variables = "clase_f", type = "response", vcov = vcv
   ) %>% as_tibble() %>%
@@ -231,7 +160,7 @@ fit_xtprobit <- function(outcome, data, ref_clase = 2,
       n_id         = length(unique(d$id_f))
     )
 
-  # Predicted probabilities por clase#ola (para Figure 3)
+  # Predicted probabilities by clase#ola for Figure 3
   pred <- marginaleffects::predictions(
     m, newdata = marginaleffects::datagrid(
       clase_f  = levels(d$clase_f),
@@ -246,9 +175,7 @@ fit_xtprobit <- function(outcome, data, ref_clase = 2,
        formula = deparse(fml), n = nrow(d))
 }
 
-# ==============================================================================
-# 7. HELPER: fit pooled probit (sin RE)
-# ==============================================================================
+# ── 7. Helper: fit pooled probit (no RE) ─────────────────────────────────────
 fit_probit <- function(outcome, data, ref_clase = 2,
                        with_controls = TRUE, label = "") {
   prep <- prep_data(data, ref_clase, outcome, with_controls)
@@ -278,9 +205,7 @@ fit_probit <- function(outcome, data, ref_clase = 2,
        ref = ref_clase, label = label, formula = deparse(fml))
 }
 
-# ==============================================================================
-# 8. ESTIMATION.DO — TABLE 4 (ref=β/Broker, xtprobit)
-# ==============================================================================
+# ── 8. Table 4 — RE probit ref=γ Broker (ib2.clase) ──────────────────────────
 message("\n=== Table 4: xtprobit ref=Broker (ib2.clase) ===")
 
 m4_1 <- fit_xtprobit("trust",    dt_bal, ref_clase=2, with_controls=FALSE, label="Table4_M1")
@@ -301,9 +226,7 @@ print(table4_ames %>%
       )) %>%
       dplyr::arrange(outcome, spec))
 
-# ==============================================================================
-# 9. ESTIMATION_2.DO — TABLE 5 (ref=α/Closed, xtprobit)
-# ==============================================================================
+# ── 9. Table 5 — RE probit ref=β Closed (ib1.clase) ──────────────────────────
 message("\n=== Table 5: xtprobit ref=Closed (ib1.clase) ===")
 
 m5_5 <- fit_xtprobit("trust",    dt_bal, ref_clase=1, with_controls=FALSE, label="Table5_M5")
@@ -323,9 +246,7 @@ print(table5_ames %>%
         p.value < .05 ~ "*",   p.value < .10 ~ ".",   TRUE ~ ""
       )))
 
-# ==============================================================================
-# 10. TABLE A1 — Pooled probit (ref=α/Closed)
-# ==============================================================================
+# ── 10. Table A1 — Pooled probit ref=β Closed ─────────────────────────────────
 message("\n=== Table A1: Pooled probit ref=Closed ===")
 
 ma1_1 <- fit_probit("trust",    dt_bal, ref_clase=1, with_controls=FALSE, label="A1_M1")
@@ -336,14 +257,9 @@ ma1_4 <- fit_probit("trust_nh", dt_bal, ref_clase=1, with_controls=TRUE,  label=
 tableA1_ames <- dplyr::bind_rows(ma1_1$ame, ma1_2$ame, ma1_3$ame, ma1_4$ame)
 readr::write_csv(tableA1_ames, here::here("output","tableA1_probit_ref_closed.csv"))
 
-# ==============================================================================
-# 11. TABLE A2 — Reverse causality: xtreg clase ~ trust + controls
-#    Stata: xtreg clase i.social_trust i.m0_sexo m0_edad i.swb
-#                   i.employed i.couple i.t02_01 i.ola, vce(cluster idencuesta)
-#    R: lmer con random intercept (equivalente a FE/RE en Stata)
-#    NOTE: Stata usa FE linear ("xtreg ... fe"). Para probit, usar glmer.
-#    clase es ordinal (1-3), xtreg lo trata como continuo. Replicamos con lmer.
-# ==============================================================================
+# ── 11. Table A2 — Reverse causality (trust -> clase) ────────────────────────
+# Stata: xtreg clase i.social_trust + controls + i.ola, vce(cluster idencuesta)
+# R: lmer with random intercept (clase treated as continuous, as in Stata xtreg)
 message("\n=== Table A2: Reverse causality (trust → clase) ===")
 
 fit_reverse <- function(trust_var, data, with_controls = TRUE, label = "") {
@@ -385,7 +301,7 @@ ra4 <- fit_reverse("trust_nh", dt_bal, with_controls=TRUE,  label="A2_M4")
 tableA2_ames <- dplyr::bind_rows(ra1$ame, ra2$ame, ra3$ame, ra4$ame)
 readr::write_csv(tableA2_ames, here::here("output","tableA2_reverse_causality.csv"))
 
-cat("\n--- TABLE A2: trust → clase (dirección opuesta) ---\n")
+cat("\n--- TABLE A2: trust -> clase (reverse direction) ---\n")
 print(tableA2_ames %>%
       dplyr::select(spec, predictor, estimate, std.error, p.value) %>%
       dplyr::mutate(sig = dplyr::case_when(
@@ -393,10 +309,7 @@ print(tableA2_ames %>%
         p.value < .05 ~ "*",   p.value < .10 ~ ".",   TRUE ~ ""
       )))
 
-# ==============================================================================
-# 12. FIGURE 3 — Predicted probabilities clase × ola
-#    Stata: margin clase#ola; marginsplot
-# ==============================================================================
+# ── 12. Figure 3 — Predicted probabilities by clase x ola ────────────────────
 message("\n=== Figure 3: Predicted probabilities clase × ola ===")
 
 # Collect predictions from Table 4 models (full controls)
@@ -461,11 +374,9 @@ fig3 <- ggplot2::ggplot(
 
 ggsave_safe("figure3_margins_clase_ola.png", fig3, width = 9, height = 5)
 ggsave_safe("figure3_margins_clase_ola.pdf", fig3, width = 9, height = 5)
-message("  Figure 3 guardada.")
+message("  Figure 3 saved.")
 
-# ==============================================================================
-# 13. RESUMEN UNIFICADO DE TODOS LOS AMEs
-# ==============================================================================
+# ── 13. Unified AME summary ───────────────────────────────────────────────────
 all_ames <- dplyr::bind_rows(
   table4_ames  %>% dplyr::mutate(table = "Table4"),
   table5_ames  %>% dplyr::mutate(table = "Table5"),
@@ -475,9 +386,7 @@ all_ames <- dplyr::bind_rows(
 
 readr::write_csv(all_ames, here::here("output","ame_summary_all_models.csv"))
 
-# ==============================================================================
-# 14. MODEL SUMMARIES (para verificación y appendix)
-# ==============================================================================
+# ── 14. Model summaries ────────────────────────────────────────────────────────
 models_to_summarize <- list(
   Table4_M1 = m4_1$model, Table4_M2 = m4_2$model,
   Table4_M3 = m4_3$model, Table4_M4 = m4_4$model,
@@ -493,23 +402,17 @@ for (nm in names(models_to_summarize)) {
 }
 writeLines(summ_lines, here::here("output","stata_replication_summaries.txt"))
 
-# ==============================================================================
-# 15. COMPARACIÓN: R vs Stata (qué verificar)
-# ==============================================================================
-cat("\n\n=== NOTA METODOLÓGICA: R vs Stata ===\n")
-cat("Stata xtprobit → R glmer(probit link + (1|id))\n")
-cat("Stata margins, dydx(*) post → R avg_slopes(type='response')\n")
-cat("Stata vce(cluster idencuesta) → R vcovCR(type='CR1', cluster=id)\n")
-cat("\nDiferencias esperadas (no son errores):\n")
-cat("  - SEs levemente distintos: Stata CR0/CR1 ≈ clubSandwich CR1\n")
-cat("  - Varianza del RE: lme4 usa REML, Stata usa ML (diferencia mínima)\n")
-cat("  - Convergencia: lme4 puede dar warnings con modelos mal condicionados\n")
-cat("\nSi los coeficientes difieren >5% entre R y Stata, verificar:\n")
-cat("  1. Codificación de clase (beta=1, gamma=2, alpha=3)\n")
-cat("  2. Panel balanceo (mismo N que Stata)\n")
-cat("  3. Missing codes -666/-888/-999\n")
+# ── 15. R vs Stata comparison notes ──────────────────────────────────────────
+cat("\n=== R vs Stata notes ===\n")
+cat("Stata xtprobit -> R glmer(probit link + (1|id))\n")
+cat("Stata margins, dydx(*) -> R avg_slopes(type='response')\n")
+cat("Stata vce(cluster idencuesta) -> R vcovCR(type='CR1', cluster=id)\n")
+cat("Expected differences (not errors):\n")
+cat("  SEs: Stata CR0/CR1 approx equals clubSandwich CR1\n")
+cat("  RE variance: lme4 REML vs Stata ML (minimal difference)\n")
+cat("If coefs differ >5%: check clase coding, N balance, missing codes.\n")
 
-message("\n[07_replicate_stata_models.R] Listo.")
-message("  Tablas: table4, table5, tableA1, tableA2")
-message("  Figura: figure3_margins_clase_ola.png")
-message("  Resumen: ame_summary_all_models.csv")
+message("\n[07_replicate_stata_models.R] done.")
+message("  Tables: table4, table5, tableA1, tableA2")
+message("  Figure: figure3_margins_clase_ola.png")
+message("  Summary: ame_summary_all_models.csv")
