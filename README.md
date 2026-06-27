@@ -80,7 +80,7 @@ This project uses **ELSOC (Chilean Longitudinal Social Survey)** data, administe
 - If the required data files are present in `data/`, replication runs out-of-the-box via `run_all.R`.
 - If not included, obtain ELSOC from the official source and place the required object in `data/`.
 
-**Official data source:** [https://coes.cl/encuesta-panel/](https://coes.cl/encuesta-panel/)
+**Official data source:** [https://dataverse.harvard.edu/dataverse/elsoc](https://dataverse.harvard.edu/dataverse/elsoc)
 
 ### Expected input
 
