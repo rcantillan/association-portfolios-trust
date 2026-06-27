@@ -96,7 +96,12 @@ Table~\ref{tab:A1_attrition} compares Wave~1 (2016) baseline characteristics.
 \tablenote{Wave~1 (2016) baseline comparisons. Balanced panel: observed in all
 three waves (2016, 2018, 2022). Attrited: present in Wave~1 but missing in at
 least one subsequent wave. $p$-values: two-sample $t$-tests (continuous) or
-proportion tests (binary).
+proportion tests (binary). The retained sample has lower baseline generalized
+trust ($-3.1$ pp, $p < .01$) and higher associational breadth ($+0.17$ domains,
+$p < .001$), which may exert modest downward bias on portfolio-position effects
+given that trust is the outcome and position is jointly patterned by associational
+embeddedness. We treat remaining attrition-related limitations as a scope
+condition of the observational design.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
 
@@ -105,11 +110,13 @@ female (+10.8 pp), reports lower generalized trust ($-3.1$ pp), and has
 higher associational breadth (+0.17 domains). The education and employment
 differences are small ($<1$ pp and $-4.6$ pp, respectively). These
 differences suggest selective retention of respondents who are more socially
-embedded and somewhat less trusting. We note that the direction of the trust
-difference is conservative with respect to our main hypotheses: if bridgers
-are more trusting and also more likely to be retained, any bias would
-\emph{inflate} the estimated position--trust association. Our reported
-estimates are therefore likely conservative lower bounds.
+embedded and somewhat less trusting. Because the retained panel has
+\textit{lower} baseline generalized trust, the estimated association between
+bridging portfolios and trust is not inflated by retaining the most
+trusting participants; if anything, the trust advantages of $\gamma$ are
+estimated in a sample where generalized trust is already selectively
+depressed. We treat this as a scope condition and exercise caution in
+generalizing estimates to the non-retained population.
 
 % ==============================================================================
 \section{Latent Markov Model: Diagnostics and Robustness}
@@ -119,9 +126,10 @@ estimates are therefore likely conservative lower bounds.
 \subsection{Model Fit Statistics}
 
 Table~\ref{tab:A2_lmm_fit} reports fit statistics for $K = 1, \ldots, 5$
-latent states. The BIC selects $K = 3$, with a $\Delta\text{BIC} = -632$
-relative to $K = 2$. The $K = 4$ solution yields $\Delta\text{BIC} = +183$,
+latent states. The BIC selects $K = 3$, with a $\Delta\text{BIC} = -814$
+relative to $K = 2$. The $K = 4$ solution yields $\Delta\text{BIC} = +114$,
 indicating that a fourth state adds complexity without improving fit.
+These statistics correspond to the submitted model (Table~3 in the main text).
 
 \begin{table}[H]
 \centering
@@ -132,18 +140,19 @@ indicating that a fourth state adds complexity without improving fit.
 \hline\hline
   $K$ & Log-likelihood & Parameters & AIC & BIC & $\Delta$BIC \\
 \hline
-  1              & $-11{,}757.84$ &   8 & $23{,}531.67$ & $23{,}573.01$ & ---     \\
-  2              & $-11{,}113.77$ &  46 & $22{,}319.55$ & $22{,}557.27$ & $-1{,}015.75$ \\
-  \textbf{3}     & $-10{,}589.93$ & 104 & $21{,}387.87$ & $21{,}925.32$ & $-631.95$ \\
-  4              & $-10{,}401.95$ & 182 & $21{,}167.89$ & $22{,}108.43$ & $+183.11$ \\
-  5              & $-10{,}208.13$ & 280 & $20{,}976.27$ & $22{,}423.26$ & $+314.82$ \\
+  1              & $-14{,}394.87$ &   8 & $28{,}805.74$ & $28{,}848.76$ & ---           \\
+  2              & $-13{,}586.64$ &  46 & $27{,}265.28$ & $27{,}512.66$ & $-1{,}336.10$ \\
+  \textbf{3}     & $-12{,}965.46$ & 104 & $26{,}138.91$ & $26{,}698.20$ & $-814.46$     \\
+  4              & $-12{,}734.50$ & 182 & $25{,}833.01$ & $26{,}811.76$ & $+113.56$     \\
+  5              & $-12{,}523.17$ & 280 & $25{,}606.33$ & $27{,}112.11$ & $+300.35$     \\
 \hline\hline
 \end{tabular}
 \tablenote{Bold row: selected model ($K = 3$, minimum BIC).
 $\Delta$BIC relative to the previous row.
 Estimated via EM algorithm (\texttt{LMest} package, R).
-ELSOC balanced panel (2016, 2018, 2022); $n = 1{,}304$ individuals,
-three waves.}
+ELSOC balanced panel (2016, 2018, 2022); $n = 1{,}297$ individuals
+(1{,}304 observed in all three waves minus 7 with missing covariate values),
+3{,}891 person-wave observations.}
 \end{table}
 
 \subsection{Classification Quality}
@@ -163,9 +172,9 @@ indicating high separation between latent states. Normalized entropy is
 \hline\hline
   Assigned position & $n$ & \% of obs. & Avg.\ $\hat{P}(\text{assigned state})$ \\
 \hline
-  $\alpha$ (Isolate)   & 2,160 & 55.5\% & 0.894 \\
-  $\beta$  (Closed)    & 1,334 & 34.3\% & 0.876 \\
-  $\gamma$ (Bridging)  &   397 & 10.2\% & 0.868 \\
+  $\alpha$ (Isolation)  & 2,160 & 55.5\% & 0.894 \\
+  $\beta$  (Clustering) & 1,334 & 34.3\% & 0.876 \\
+  $\gamma$ (Bridging)   &   397 & 10.2\% & 0.868 \\
 \hline
   Overall mean $p_{\max}$                        & \multicolumn{3}{c}{0.885} \\
   Share strictly classified ($p_{\max} \geq .60$) & \multicolumn{3}{c}{92.7\%} \\
@@ -181,9 +190,9 @@ Total: 3,891 person-wave observations; $n_\text{id} = 1{,}297$ unique respondent
 \subsection{Latent Portfolio Profiles}
 
 Table~\ref{tab:A4_profiles} reports the full item-response probability
-matrix from the $K = 3$ model. $\alpha$ (Isolate) shows uniformly low
+matrix from the $K = 3$ model. $\alpha$ (Isolation) shows uniformly low
 membership probability ($< 0.20$) across all eight domains.
-$\beta$ (Closed) shows elevated probability in neighborhood and religious
+$\beta$ (Clustering) shows elevated probability in neighborhood and religious
 organizations but low probability elsewhere (2 domains $\geq .30$;
 diversity $D = 0.25$). $\gamma$ (Bridging) shows high membership probability
 across six of eight domains (diversity $D = 0.75$).
@@ -197,7 +206,7 @@ See Figure~1 in the main text for a graphical display of these profiles.
 \small
 \begin{tabular}{lccc}
 \hline\hline
-  Domain & $\alpha$ (Isolate) & $\beta$ (Closed) & $\gamma$ (Bridging) \\
+  Domain & $\alpha$ (Isolation) & $\beta$ (Clustering) & $\gamma$ (Bridging) \\
 \hline
   Neighborhood organizations (JJVV) & 0.18 & 0.60 & 0.61 \\
   Religious organizations            & 0.08 & 0.67 & 0.48 \\
@@ -240,12 +249,12 @@ position is not a Wave-specific artefact.
 \hline\hline
   Position & Transition & $n$ & P(stay) & P(exit) & 95\% CI \\
 \hline
-  $\alpha$ (Isolate)  & 2016$\to$2018 &  720 & 0.911 & 0.089 & [0.890,\;0.932] \\
-  $\alpha$ (Isolate)  & 2018$\to$2022 &  717 & 0.933 & 0.067 & [0.915,\;0.951] \\
-  $\beta$  (Closed)   & 2016$\to$2018 &  448 & 0.886 & 0.114 & [0.857,\;0.916] \\
-  $\beta$  (Closed)   & 2018$\to$2022 &  436 & 0.929 & 0.071 & [0.905,\;0.953] \\
-  $\gamma$ (Bridging) & 2016$\to$2018 &  129 & 0.597 & 0.403 & [0.512,\;0.682] \\
-  $\gamma$ (Bridging) & 2018$\to$2022 &  144 & 0.576 & 0.424 & [0.496,\;0.657] \\
+  $\alpha$ (Isolation)  & 2016$\to$2018 &  720 & 0.911 & 0.089 & [0.890,\;0.932] \\
+  $\alpha$ (Isolation)  & 2018$\to$2022 &  717 & 0.933 & 0.067 & [0.915,\;0.951] \\
+  $\beta$  (Clustering) & 2016$\to$2018 &  448 & 0.886 & 0.114 & [0.857,\;0.916] \\
+  $\beta$  (Clustering) & 2018$\to$2022 &  436 & 0.929 & 0.071 & [0.905,\;0.953] \\
+  $\gamma$ (Bridging)   & 2016$\to$2018 &  129 & 0.597 & 0.403 & [0.512,\;0.682] \\
+  $\gamma$ (Bridging)   & 2018$\to$2022 &  144 & 0.576 & 0.424 & [0.496,\;0.657] \\
 \hline\hline
 \end{tabular}
 \tablenote{Unconditional persistence and exit rates by position and transition
@@ -294,12 +303,12 @@ $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \hline\hline
   Predictor & AME & (SE) & $p$-value \\
 \hline
-  \multicolumn{4}{l}{\textit{Starting position: $\alpha$ (Isolate) --- exit rate = 7.8\%, $n = 1{,}437$}} \\
+  \multicolumn{4}{l}{\textit{Starting position: $\alpha$ (Isolation) --- exit rate = 7.8\%, $n = 1{,}437$}} \\
 \hline
   \quad High education   & $+0.029^{\dagger}$ & (0.016) & 0.065 \\
   \quad Employed         & $+0.013$           & (0.015) & 0.364 \\
 \hline
-  \multicolumn{4}{l}{\textit{Starting position: $\beta$ (Closed) --- exit rate = 9.3\%, $n = 884$}} \\
+  \multicolumn{4}{l}{\textit{Starting position: $\beta$ (Clustering) --- exit rate = 9.3\%, $n = 884$}} \\
 \hline
   \quad High education   & $+0.082^{*}$       & (0.035) & 0.019 \\
   \quad Employed         & $-0.008$           & (0.020) & 0.682 \\
@@ -313,6 +322,10 @@ $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \tablenote{AMEs from probit models of $P(\text{exit from starting position at } t+1)$.
 Each panel uses respondents starting in the indicated position.
 Controls: sex, age, wave indicator. Cluster-robust SE (by individual).
+The direction of the education AME reverses at $\gamma$ (negative, i.e., higher
+education predicts \textit{retention} in bridging) relative to $\alpha$ and $\beta$
+(positive, i.e., higher education predicts exit toward bridging), constituting
+the specificity signature of structural precarity.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
 
@@ -375,7 +388,7 @@ the random-effects probit models that constitute our preferred specification
   \cmidrule(lr){2-3}\cmidrule(lr){4-5}
   & M1 (no ctrl) & M2 (ctrl) & M3 (no ctrl) & M4 (ctrl) \\
 \hline
-  $\beta$ vs.\ $\gamma$ & $-0.059^{**}$ & $-0.056^{**}$ & $-0.037$       & $-0.022$      \\
+  $\beta$ vs.\ $\gamma$ & $-0.059^{***}$ & $-0.056^{***}$ & $-0.037$       & $-0.022$      \\
                         & (0.018)       & (0.018)       & (0.035)        & (0.035)       \\[4pt]
   $\alpha$ vs.\ $\gamma$& $-0.035^{*}$  & $-0.033^{\dagger}$ & $-0.091^{**}$ & $-0.080^{*}$ \\
                         & (0.018)       & (0.017)       & (0.033)        & (0.033)       \\
@@ -390,6 +403,12 @@ the random-effects probit models that constitute our preferred specification
 Reference category: $\gamma$ (Bridging). Controls: subjective wellbeing,
 employment status, couple status.
 SE in parentheses (model-based with cluster-robust fallback).
+Note: although both $\alpha$ vs.\ $\gamma$ and $\beta$ vs.\ $\gamma$ contrasts
+are individually distinguishable from zero for generalized trust, the two AMEs
+are not statistically distinguishable from \textit{each other}; a direct Wald
+test of $H_0$: AME$_\alpha =$ AME$_\beta$ yields $\chi^2(1) = 1.64$, $p = .200$,
+indicating the $\alpha > \beta$ ordering is directionally consistent but
+descriptive rather than inferential.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
 
@@ -470,8 +489,8 @@ generalized trust --- is significant in all four model-based specifications
 \tablenote{Reference: $\gamma$ (Bridging) in S1--S4. In S5, $p_{\gamma}$ and
 $p_{\beta}$ are continuous predictors (implicit reference: $p_{\alpha}$).
 Main model (Table~A9): $\beta$ vs.\ $\gamma$ generalized trust AME
-$= -0.056^{**}$. S2 (Oster $\delta$) produces bounds, not AMEs; see
-Table~\ref{tab:A12_oster}.
+$= -0.056^{***}$. S2 (Oster $\delta$) produces bounds, not AMEs; see
+Table~\ref{tab:A13_oster}.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
 
@@ -527,12 +546,12 @@ The \citet{oster2019unobservable} test asks how strongly an omitted variable
 would need to correlate with both treatment and outcome to fully explain the
 estimated effect. Setting $R^2_{\max} = \min(1.3 \times R^2_{\text{full}},
 1)$, all four contrasts yield $|\delta| > 1$
-(Table~\ref{tab:A12_oster}), satisfying the conventional robustness threshold.
+(Table~\ref{tab:A13_oster}), satisfying the conventional robustness threshold.
 
 \begin{table}[H]
 \centering
 \caption{S2: Oster (2019) $\delta$ bounds}
-\label{tab:A12_oster}
+\label{tab:A13_oster}
 \small
 \begin{tabular}{llcccccl}
 \hline\hline
@@ -560,13 +579,13 @@ trust at $t-1$. Restricted to waves 2 and 3 ($N = 2{,}594$;
 $n_{\text{id}} = 1{,}297$). Both generalized trust contrasts remain
 significant; neighbourhood trust contrasts are in the expected direction and
 at least marginally significant ($p < .10$)
-(Table~\ref{tab:A13_crosslag}). Singular-fit warnings reflect expected
+(Table~\ref{tab:A14_crosslag}). Singular-fit warnings reflect expected
 collapse of RE variance when a lagged DV is included; AMEs remain valid.
 
 \begin{table}[H]
 \centering
 \caption{S3: Cross-lagged AMEs --- position at $t-1$ predicts trust at $t$, controlling for trust at $t-1$}
-\label{tab:A13_crosslag}
+\label{tab:A14_crosslag}
 \small
 \begin{tabular}{llccc}
 \hline\hline
@@ -596,12 +615,12 @@ main model, consistent with attenuation bias from classification noise.
 For neighbourhood trust, the $\alpha$ vs.\ $\gamma$ contrast remains
 significant ($-0.099^{**}$); the $\beta$ vs.\ $\gamma$ contrast does not
 reach conventional significance ($-0.045$, SE $= 0.035$)
-(Table~\ref{tab:A14_entropy}).
+(Table~\ref{tab:A15_entropy}).
 
 \begin{table}[H]
 \centering
 \caption{S4: Entropy-weighted pooled probit AMEs}
-\label{tab:A14_entropy}
+\label{tab:A15_entropy}
 \small
 \begin{tabular}{llccc}
 \hline\hline
@@ -627,14 +646,14 @@ Posterior probabilities $p_{\gamma}$ and $p_{\beta}$ replace modal class
 assignment as continuous predictors (reference: $p_{\alpha}$, omitted).
 Higher $p_{\gamma}$ predicts more trust in both outcomes; higher $p_{\beta}$
 predicts less generalized trust and more neighbourhood trust
-(Table~\ref{tab:A15_soft}). The neighbourhood trust effect of $p_{\gamma}$
+(Table~\ref{tab:A16_soft}). The neighbourhood trust effect of $p_{\gamma}$
 ($+0.119^{**}$, SE = 0.038) is the largest point estimate in the sensitivity
 analysis.
 
 \begin{table}[H]
 \centering
 \caption{S5: Soft-assignment AMEs --- posterior probabilities as continuous predictors}
-\label{tab:A15_soft}
+\label{tab:A16_soft}
 \small
 \begin{tabular}{llccc}
 \hline\hline
@@ -651,26 +670,6 @@ continuous predictors. Controls: age, sex, swb, employment, couple status,
 institutional trust, wave dummies. $N = 3{,}891$.
 $\dagger p<.10$; $* p<.05$; $** p<.01$; $*** p<.001$.}
 \end{table}
-
-% ==============================================================================
-\section{Sensitivity: Active-Only Membership Coding}
-\label{sec:active}
-% ==============================================================================
-
-The main analysis codes membership as active \emph{or} inactive
-(\texttt{c12} $\geq 2$). To assess sensitivity to this coding choice, models
-should be re-estimated using strict active-only membership (\texttt{c12} $= 3$).
-This requires re-running \texttt{02\_latent\_markov.R} with
-\texttt{MEMBER\_CODE\_LOGIC = "active\_only"} and is reserved for the
-revision stage.
-
-\noindent\textbf{Planned analyses:}
-\begin{enumerate}
-  \item Latent Markov Model fit and profile comparison (active-only vs.\ any-member)
-  \item Portfolio-position assignment comparison (cross-tabulation)
-  \item Trust AMEs under active-only classification
-  \item Exit-from-$\gamma$ SES gradient under active-only coding
-\end{enumerate}
 
 % ==============================================================================
 \newpage

@@ -48,7 +48,7 @@ output/                               # Generated tables (.txt) and figures (.pd
 ```
 
 > **Paths:** All R scripts use relative paths via the `{here}` package. Run from the repository root.  
-> **Membership coding:** `MEMBER_CODE_LOGIC = "any_member"` (c12 ≥ 2) is the main analysis specification. Active-only sensitivity (c12 == 3) is in `code/SI/03c_active_only_sensitivity.R`.  
+> **Membership coding:** The main analysis uses `any_member` coding (c12 ≥ 2), defined in `00_setup.R`. The active-only sensitivity (c12 == 3, specification S7) is self-contained in `code/SI/03c_active_only_sensitivity.R` and runs as part of the full pipeline.  
 > **State mapping (canonical):** α = State 3 (Isolation), β = State 1 (Clustering), γ = State 2 (Bridging). This mapping is defined once in `00_setup.R` and used throughout.
 
 ---
