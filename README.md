@@ -1,6 +1,6 @@
-# Replication Package — Why Associational Life Fails to Build Generalized Trust under Inequality
+# Replication Package 
 
-This repository contains the replication materials for the manuscript:
+This repository contains the replication materials for the manuscript
 
 **"Why Associational Life Fails to Build Generalized Trust under Inequality"**  
 
@@ -111,20 +111,3 @@ All outputs (tables as `.txt`, figures as `.pdf`) are written to `output/`.
 
 To reproduce a single stage, source the relevant script directly — each script loads its dependencies via `here::here()` and the shared config from `00_setup.R`.
 
----
-
-## Key numerical results (for verification)
-
-| Result | Value |
-|---|---|
-| Balanced panel N | 1,304 individuals; 3,891 person-waves |
-| γ (Bridging) prevalence | ~11% of person-wave observations |
-| γ persistence probability (model-implied) | 0.31 |
-| β persistence probability (model-implied) | 0.61 |
-| AME of high education on P(exit from γ) | −0.220 (SE = 0.065, p < .001) |
-| AME β vs. γ — generalized trust (main model) | −0.056 (SE = 0.018, p < .01) |
-| AME α vs. γ — generalized trust (main model) | −0.033 (SE = 0.017, p < .10) |
-| AME α vs. γ — neighborhood trust (main model) | −0.080 (SE = 0.033, p < .05) |
-| CRE/Mundlak AME β vs. γ — generalized trust | −0.081 (SE = 0.023, p < .001) |
-
----
