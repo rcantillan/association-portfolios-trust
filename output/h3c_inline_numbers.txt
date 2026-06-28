@@ -1,0 +1,44 @@
+================================================================
+INLINE NUMBERS — 03c Interaction model
+================================================================
+
+Total transitions in pooled model: n = 2594
+
+--- AME of edu_high by starting position (pooled model) ---
+  alpha: AME = +0.019  SE = 0.015  p = 0.2063  
+  beta:  AME = +0.100  SE = 0.036  p = 0.0051  **
+  gamma: AME = -0.221  SE = 0.064  p = 0.0006  ***
+
+Interaction coeff (gamma x edu_high), p = 0.0002
+
+--- AME of employed by starting position (pooled model) ---
+  alpha: AME = +0.020  SE = 0.014  p = 0.1621  
+  beta:  AME = -0.007  SE = 0.020  p = 0.7161  
+  gamma: AME = -0.143  SE = 0.065  p = 0.0287  *
+
+--- Contrasts (gamma - alpha for edu_high) ---
+# A tibble: 3 × 4
+  hypothesis estimate std.error p.value
+  <chr>         <dbl>     <dbl>   <dbl>
+1 b2-b1=0      0.0805    0.0381  0.0345
+2 b3-b1=0     -0.240     0.0646  0.0002
+3 b3-b2=0     -0.321     0.0702  0     
+
+================================================================
+SI PARAGRAPH (LaTeX-ready):
+================================================================
+
+To address the limited sample size for $\gamma$-exit models ($n = 273$
+person-wave observations), we re-estimated the SES gradient using a pooled
+probit model on all $N = 2594$ transitions, with starting-position fixed effects
+and position $\times$ SES interaction terms. This specification preserves
+full statistical power while formally testing whether the education effect
+reverses sign at $\gamma$ relative to other positions. The position-specific
+AMEs of high education from the pooled model are: $\alpha$, AME $= +0.019$
+(SE $= 0.015$, $p = 0.206$); $\beta$, AME $= +0.100$ (SE $= 0.036$, $p = 0.005$);
+and $\gamma$, AME $= -0.221$ (SE $= 0.064$, $p < .001$). The $\gamma
+\times$ high-education interaction coefficient is statistically significant
+($p = 0.000$), confirming that the negative SES gradient at $\gamma$ is
+significantly different from the positive gradient at $\alpha$ and $\beta$.
+These results replicate and formally test the sign reversal documented in
+Table~\ref{table:SI_A4} using the full pooled sample (Table~\ref{table:SI_A6}).

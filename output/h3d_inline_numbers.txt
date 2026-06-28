@@ -1,0 +1,35 @@
+================================================================
+INLINE NUMBERS — 03d IPW attrition correction
+================================================================
+
+Wave-1 n: 2927 | Panel n: 1300 | Retention rate: 44.4%
+Attrition model pseudo-R²: 0.018
+IPW weight range (retained): 0.687–1.510 (mean=0.998, sd=0.176)
+Pct trimmed at 99th pctile: 1.1%
+
+--- Unweighted (M3 replicate) ---
+  edu_high: AME=-0.220  SE=0.065  p=0.0007  ***
+  employed: AME=-0.149  SE=0.067  p=0.0260  *
+
+--- IPW-weighted ---
+  edu_high: AME=-0.228  SE=0.066  p=0.0005  ***
+  employed: AME=-0.144  SE=0.067  p=0.0322  *
+
+================================================================
+SI PARAGRAPH (LaTeX-ready):
+================================================================
+
+We further assessed whether differential attrition from Wave~1 ($n = 2927$)
+to the balanced panel ($n = 1300$; retention rate = 44.4\%) biases our
+estimates. We modelled the probability of retention as a function of Wave-1
+demographics, education, employment status, generalized trust, and
+subjective well-being (pseudo-$R^2 = 0.018$), and computed stabilized
+inverse-probability weights (IPW) as $\hat{w}_i = \bar{p} /
+\hat{P}(\text{retained}|\mathbf{X}_i)$, trimmed at the 99th percentile
+(weight range: 0.69--1.51; mean = 1.00). Re-estimating the exit-from-$\gamma$
+probit with these weights leaves results substantively unchanged:
+AME(high education) $= -0.228$ (SE $= 0.066$, $p < .001$) and
+AME(employed) $= -0.144$ (SE $= 0.067$, $p = 0.032$), compared to unweighted
+estimates of -0.220 and -0.149, respectively (Table~\ref{table:SI_A7}).
+Differential attrition does not appear to confound the structural precarity
+results.

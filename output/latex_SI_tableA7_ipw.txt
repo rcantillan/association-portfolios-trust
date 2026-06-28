@@ -1,0 +1,31 @@
+% ============================================================
+% SI Table A7 — IPW attrition-corrected AMEs (H3 robustness)
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{IPW-corrected estimates of the SES gradient in exits from
+$\gamma$ (attrition robustness check)}
+\label{table:SI_A7}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lcccc}
+\hline\hline
+  & \multicolumn{2}{c}{High education} & \multicolumn{2}{c}{Employed} \\
+  \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+  Model & AME & (SE) & AME & (SE) \\
+\hline
+  Unweighted (M3, preferred)           & -0.220*** & (0.065) & -0.149* & (0.067) \\
+  IPW-weighted                         & -0.228*** & (0.066) & -0.144* & (0.067) \\
+\hline\hline
+  \multicolumn{5}{p{0.88\textwidth}}{\footnotesize \textit{Notes.}
+  Probit models of P(exit from $\gamma$ by $t+1$), $n = 273$
+  person-wave observations. Both models include sex, age, and wave indicator.
+  IPW: stabilized weights $\hat{w}_i = \bar{p} / \hat{P}(\text{retained}|\mathbf{X}_i)$,
+  trimmed at 99th percentile (range: 0.69--1.51, mean: 1.00).
+  Attrition model ($N = 1860$ Wave-1 respondents): logistic regression on
+  sex, age, education, employment, generalized trust, subjective well-being.
+  Retention rate = 44.4\%.
+  Cluster-robust SE (by individual).
+  $\dagger p < .10$; $* p < .05$; $** p < .01$; $*** p < .001$.} \\
+\end{tabular}
+\end{table}

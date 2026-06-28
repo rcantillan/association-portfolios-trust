@@ -1,0 +1,45 @@
+% ============================================================
+% SI Table A6 — Pooled interaction model (n=2,594)
+% Addresses the small-n concern for the gamma-exit analysis
+% ============================================================
+\begin{table}[htbp]
+\centering
+\caption{Socioeconomic gradient by starting position: pooled probit with
+position $\times$ SES interactions ($N = 2{,}594$ person-wave transitions)}
+\label{table:SI_A6}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llccc}
+\hline\hline
+  Starting position & Predictor & AME & (SE) & $p$-value \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\alpha$ (isolation)}} \\
+  $\alpha$ (isolation)       & \quad High education (ref: low) & 0.019 & (0.015) & 0.2063 \\
+  $\alpha$ (isolation)       & \quad Employed (ref: other)  & 0.020 & (0.014) & 0.1621 \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\beta$ (clustering)}} \\
+  $\beta$ (clustering)       & \quad High education (ref: low) & 0.100** & (0.036) & 0.0051 \\
+  $\beta$ (clustering)       & \quad Employed (ref: other)  & -0.007 & (0.020) & 0.7161 \\
+\hline
+  \multicolumn{5}{l}{\textit{Starting position: $\gamma$ (bridging)}} \\
+  $\gamma$ (bridging)        & \quad High education (ref: low) & -0.221*** & (0.064) & 0.0006 \\
+  $\gamma$ (bridging)        & \quad Employed (ref: other)  & -0.143* & (0.065) & 0.0287 \\
+\hline
+  \multicolumn{5}{l}{\textit{Contrasts: AME(high education) across positions}} \\
+  $\beta\,vs.\,$\alpha$ (edu\_high)$ & & 0.080* & (0.0381) & 0.0345 \\
+  $\gamma\,vs.\,$\alpha$ (edu\_high)$^{\dagger\dagger}$$ & & -0.240*** & (0.0646) & 0.0002 \\
+  $\gamma\,vs.\,$\beta$ (edu\_high)$ & & -0.321*** & (0.0702) & 0.0000 \\
+\hline\hline
+  \multicolumn{5}{p{0.92\textwidth}}{\footnotesize \textit{Notes.}
+  Pooled probit of P(exit from starting position by $t+1$), $N = 2594$
+  person-wave transitions. Model includes starting-position fixed effects
+  and position $\times$ edu\_high and position $\times$ employed interaction
+  terms. AMEs are computed within each starting-position sub-sample from
+  the pooled coefficient vector (\texttt{avg\_comparisons(..., by = position)}).
+  Reference category for position: $\alpha$ (isolation).
+  Controls: sex, age (band midpoint), wave indicator.
+  Cluster-robust SE (by individual). ${}^{\dagger\dagger}$ Main test of H3:
+  education gradient at $\gamma$ significantly differs from $\alpha$.
+  $\dagger p < .10$; $* p < .05$; $** p < .01$; $*** p < .001$.} \\
+\end{tabular}
+\end{table}

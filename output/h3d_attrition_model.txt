@@ -1,0 +1,29 @@
+=== Attrition model: P(retained in balanced panel | Wave-1 covariates) ===
+
+
+Call:
+glm(formula = retained ~ woman_w1 + age_c + edu_high_w1 + employed_w1 + 
+    trust_w1 + swb_w1, family = binomial("logit"), data = w1_cc)
+
+Coefficients:
+             Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -1.715319   0.304575  -5.632 1.78e-08 ***
+woman_w1     0.549992   0.104675   5.254 1.49e-07 ***
+age_c        0.007953   0.003458   2.300 0.021444 *  
+edu_high_w1  0.229701   0.128311   1.790 0.073424 .  
+employed_w1  0.138571   0.105914   1.308 0.190759    
+trust_w1     0.432485   0.123353   3.506 0.000455 ***
+swb_w1       0.013199   0.045789   0.288 0.773143    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 2561.4  on 1859  degrees of freedom
+Residual deviance: 2514.2  on 1853  degrees of freedom
+AIC: 2528.2
+
+Number of Fisher Scoring iterations: 4
+
+
+Pseudo-R² (McFadden): 0.018 
